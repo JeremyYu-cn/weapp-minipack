@@ -31,6 +31,8 @@ function addEnv(rootPath: string, configFile: string[], env: string) {
     const file = resolve(rootPath, x);
     if (existsSync(file) && statSync(file).isFile()) {
       const data = readFileSync(file, { encoding: 'utf-8' });
+      console.log(env);
+      
       writeFileSync(file, [env, '\r\n', data.replace(new RegExp(env, 'g'), '')].join(''))
     }
   }

@@ -7,7 +7,7 @@ import childProcess from 'child_process';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
-const TS_REG = new RegExp(".*.ts$");
+const TS_REG = /.*\.ts$/;
 
 /**
  * 读取文件夹
@@ -132,10 +132,11 @@ function actionCompile(
     option: miniPack.IWatchFileOption
 ) {
     const {
-        rootPath, copyPath, tsconfigPath, inpourEnv,
+        rootPath, tsconfigPath, inpourEnv,
         miniprogramProjectConfig, miniprogramProjectPath,
         typingDirPath,
     } = option;
+    let { copyPath } = option;
 
     // 对象去重
     fileArr = filterObject(fileArr);
@@ -148,9 +149,6 @@ function actionCompile(
     
     // 有文件新增或删除为重新编译
     if (isReadName) {
-        const DeteleResult = childProcess.spawnSync('rm', ['-r', `${ copyPath }`]);
-        console.log(`${ copyPath }/*`);
-        console.log(DeteleResult.stderr.toString());
         const compileResult = childProcess.spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath]);
         if (compileResult.status === 0) {
             if (inpourEnv.isInpour) {
@@ -162,30 +160,40 @@ function actionCompile(
         main(rootPath, copyPath);
     } else {
         // 写入ts文件
-        const sourcePath = [];
-        for (let compileFile of tsFile) {
-            sourcePath.push(`${ resolve(rootPath, compileFile.filename) }`);
+        if (tsFile.length) {
+            const sourcePath = [];
+            for (let compileFile of tsFile) {
+                if (TS_REG.test(compileFile.filename)){ 
+                    sourcePath.push(`${ resolve(rootPath, compileFile.filename) }`);
+                }
+            }
+            if (sourcePath.length) {
+
+                console.log(sourcePath);
+                console.log('compilePath:', copyPath);
+                
+                console.log('正在编译指定文件');
+                console.time('compile');
+                
+
+                let args = sourcePath.concat([
+                    '--lib', 'es6,ES2017.Object,ES2015.Promise',
+                    '--outDir', copyPath,
+                ])
+                if (typingDirPath.length) args = args.concat(['--types', typingDirPath.join(',')]);
+
+                
+
+                const compileResult = childProcess.spawnSync('tsc', args);
+                console.log(compileResult.stdout.toString());
+                
+                if (inpourEnv.isInpour) {
+                    addEnv(copyPath, inpourEnv.files, inpourEnv.data);
+                }
+                console.log('编译完成');
+                console.timeEnd('compile');
+            }
         }
-        console.log(sourcePath);
-
-        
-        console.log('正在编译指定文件');
-        console.time('compile');
-
-        let args = sourcePath.concat([
-            '--typeRoots', typingDirPath.join(','), '--lib', 
-            'es6,ES2017.Object,ES2015.Promise','--outDir', copyPath
-        ])
-        if (typingDirPath.length) args = args.concat(['--typeRoots', typingDirPath.join(',')]);
-
-        const compileResult = childProcess.spawnSync('tsc', args);
-        console.log(compileResult.stdout.toString());
-        
-        if (inpourEnv.isInpour) {
-            addEnv(copyPath, inpourEnv.files, inpourEnv.data);
-        }
-        console.log('编译完成');
-        console.timeEnd('compile');
 
         // 写入修改的文件
         for(let assetFile of assetsFile) {

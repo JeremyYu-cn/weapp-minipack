@@ -12,7 +12,7 @@ class Entry {
     private program: null | commander.Command;
     private config: miniPack.IConfigOption
     constructor() {
-        this.DEFAULT_MINIPACK_CONFIG_PATH = resolve(__dirname, '../minipack.config.js')
+        this.DEFAULT_MINIPACK_CONFIG_PATH = resolve(__dirname, '../../minipack.config.js')
         this.program = null;
         this.config = DEFAULT_CONFIG;
     }
