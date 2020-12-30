@@ -1,13 +1,15 @@
 import {
     readdirSync, existsSync, createReadStream, createWriteStream,
-    statSync, mkdirSync, watch
+    statSync, mkdirSync, watch,
 } from 'fs';
+import readLine from 'readline';
 import { resolve } from 'path';
 import childProcess from 'child_process';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
+const IMPORT_REG = /import.*from.*/;
 
 /**
  * 读取文件夹
@@ -127,7 +129,7 @@ function watchFile(option: miniPack.IWatchFileOption, during: number = 500) {
 /**
  * 监听文件开始编译
  */
-function actionCompile(
+async function actionCompile(
     fileArr: { type: string, event: string, filename: string }[],
     option: miniPack.IWatchFileOption
 ) {
@@ -162,28 +164,33 @@ function actionCompile(
         // 写入ts文件
         if (tsFile.length) {
             const sourcePath = [];
+            let outDirArr: string[] = [];
             for (let compileFile of tsFile) {
-                if (TS_REG.test(compileFile.filename)){ 
-                    sourcePath.push(`${ resolve(rootPath, compileFile.filename) }`);
+                if (TS_REG.test(compileFile.filename)) {
+                    const sourchFile = resolve(rootPath, compileFile.filename);
+                    const isImport = await checkIsImport(sourchFile)
+                    let compilePath: string | string[] = resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
+                    compilePath.splice(compilePath.length - 1, 1);
+                    compilePath = compilePath.join('/');
+
+                    console.log('sourchFile', sourchFile);
+                    console.log('compilePath', compilePath);
+                    
+                    sourcePath.push(`${ sourchFile }`);
+                    outDirArr = outDirArr.concat([`--outDir` , isImport ? copyPath : compilePath, sourchFile]);
                 }
             }
             if (sourcePath.length) {
-
                 console.log(sourcePath);
-                console.log('compilePath:', copyPath);
                 
                 console.log('正在编译指定文件');
                 console.time('compile');
                 
-
                 let args = sourcePath.concat([
                     '--lib', 'es6,ES2017.Object,ES2015.Promise',
-                    '--outDir', copyPath,
-                ])
+                ], outDirArr);
                 if (typingDirPath.length) args = args.concat(['--types', typingDirPath.join(',')]);
-
                 
-
                 const compileResult = childProcess.spawnSync('tsc', args);
                 console.log(compileResult.stdout.toString());
                 
@@ -216,10 +223,34 @@ function filterObject(arr: { type: string, event: string, filename: string }[]) 
     return result;
 }
 
+/**
+ *  查看文件是否有import
+ * @param filePath 文件路径
+ */
+function checkIsImport(filePath: string): Promise<boolean>{
+    return new Promise(finished => {
+        if (checkIsDir(filePath)) finished(false);
+        const readStream = createReadStream(filePath);
+        const rl = readLine.createInterface(readStream);
+        let isImport = false;
+        rl.on('line', (lineData) => {
+            if (IMPORT_REG.test(lineData)) {
+                isImport = true;
+                rl.close();
+            }
+        })
+        rl.on('close', () => {
+            finished(isImport);
+        })
+    })
+    
+}
+
 export {
     EXPLORE_REG,
     readTsFile,
     main,
     watchFile,
+    checkIsImport,
 }
 
