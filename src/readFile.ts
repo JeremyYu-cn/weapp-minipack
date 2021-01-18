@@ -151,7 +151,7 @@ async function actionCompile(
     
     // 有文件新增或删除为重新编译
     if (isReadName) {
-        const compileResult = childProcess.spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath]);
+        const compileResult = childProcess.spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath], { shell: true });
         if (compileResult.status === 0) {
             if (inpourEnv.isInpour) {
                 addEnv(copyPath, inpourEnv.files, inpourEnv.data);
@@ -172,9 +172,6 @@ async function actionCompile(
                     let compilePath: string | string[] = resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
                     compilePath.splice(compilePath.length - 1, 1);
                     compilePath = compilePath.join('/');
-
-                    console.log('sourchFile', sourchFile);
-                    console.log('compilePath', compilePath);
                     
                     sourcePath.push(`${ sourchFile }`);
                     outDirArr = outDirArr.concat([`--outDir` , isImport ? copyPath : compilePath, sourchFile]);
@@ -191,8 +188,8 @@ async function actionCompile(
                 ], outDirArr);
                 if (typingDirPath.length) args = args.concat(['--types', typingDirPath.join(',')]);
                 
-                const compileResult = childProcess.spawnSync('tsc', args);
-                console.log(compileResult.stdout.toString());
+                const compileResult = childProcess.spawnSync('tsc', args, { shell: true, });
+                console.log(compileResult.stdout ? compileResult.stdout.toString(): compileResult.error);
                 
                 if (inpourEnv.isInpour) {
                     addEnv(copyPath, inpourEnv.files, inpourEnv.data);
