@@ -105,5 +105,20 @@ declare module miniPack {
          */
         miniprogramProjectPath: string
     }
+
+    interface ITsFileData {
+        /**
+         * 文件类型
+         */
+        type: string;
+        /**
+         * 执行的文件操作
+         */
+        event: string;
+        /**
+         * 文件名
+         */
+        filename: string;
+    }
 }
 

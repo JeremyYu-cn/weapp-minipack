@@ -4,7 +4,7 @@ const PROJECT_CONFIG_PATH = resolve(__dirname, '../project.config.json');
 /**
  * 改变小程序配置
  */
-function changeMiniprogramConfig(config = {}, configPath = PROJECT_CONFIG_PATH) {
+export function changeMiniprogramConfig(config = {}, configPath = PROJECT_CONFIG_PATH) {
   if (existsSync(configPath)) {
     let data = readFileSync(configPath, { encoding: 'utf-8' });
     try {
@@ -26,7 +26,7 @@ function changeMiniprogramConfig(config = {}, configPath = PROJECT_CONFIG_PATH) 
  * @param { Array String } configFile 
  * @param { String } env 
  */
-function addEnv(rootPath: string, configFile: string[], env: string) {
+export function addEnv(rootPath: string, configFile: string[], env: string) {
   for (let x of configFile) {
     const file = resolve(rootPath, x);
     if (existsSync(file) && statSync(file).isFile()) {
@@ -36,8 +36,4 @@ function addEnv(rootPath: string, configFile: string[], env: string) {
       writeFileSync(file, [env, '\r\n', data.replace(new RegExp(env, 'g'), '')].join(''))
     }
   }
-}
-export {
-  changeMiniprogramConfig,
-  addEnv,
 }

@@ -3,8 +3,12 @@
   "version": "0.0.1",
   "description": "bundler for miniprogram",
   "main": "index.ts",
+  "bin": {
+    "minipack": "./dist/bundle.js"
+  },
   "scripts": {
-    "test": "ts-node index.ts"
+    "test": "node ./test/index.js",
+    "build": "rollup --config ./rollup.config.js"
   },
   "keywords": [
     "wechat",
@@ -20,6 +24,11 @@
     "@types/commander": "^2.12.2",
     "@types/node": "^14.14.14",
     "commander": "^6.2.1",
+    "rollup": "^2.50.4",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-replace": "^2.2.0",
+    "rollup-plugin-typescript": "^1.0.1",
     "ts-node": "^9.1.1",
     "tslib": "^2.0.3",
     "typescript": "^4.1.3"

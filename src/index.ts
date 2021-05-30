@@ -1,19 +1,19 @@
 import childProcess from 'child_process';
 import { resolve } from 'path';
-import { statSync, existsSync } from 'fs';
+import { statSync, existsSync, } from 'fs';
 import commander from 'commander';
 import DEFAULT_CONFIG from './config';
 
-const handleFile = require('./readFile');
-const projectConfig = require('./changeConfig');
+import handleFile from './readFile';
+import { addEnv, changeMiniprogramConfig, } from './changeConfig';
 
-class Entry {
+export default class Entry {
     private DEFAULT_MINIPACK_CONFIG_PATH: string;
     private program: null | commander.Command;
     private config: miniPack.IConfigOption
-    constructor() {
-        this.DEFAULT_MINIPACK_CONFIG_PATH = resolve(__dirname, '../../minipack.config.js')
-        this.program = null;
+    constructor(command: commander.Command) {
+        this.program = command
+        this.DEFAULT_MINIPACK_CONFIG_PATH = resolve(__dirname, '../minipack.config.js')
         this.config = DEFAULT_CONFIG;
     }
 
@@ -21,14 +21,7 @@ class Entry {
      * init project
      */
     init() {
-        this.program = new commander.Command()
-        .version('0.0.1')
-        .option('-c, --config <type>', 'config file path', this.DEFAULT_MINIPACK_CONFIG_PATH) // set config file path
-        .option('-h, --help', 'helping how to use')
-        .parse(process.argv);
-        
         this.setConig();
-
         return this;
     }
 
@@ -39,18 +32,22 @@ class Entry {
          
         if (this.program) {
             // get config file
-            console.log(this.program.config);
+            if (!this.program.config) {
+                this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
+            }
+            const file = resolve(__dirname, this.program.config)
+            console.log(file);
             
-            if (existsSync(this.program.config) && statSync(this.program.config).isFile()) {
+            if (existsSync(file) && statSync(file).isFile()) {
                 try {
-                    let data = require(this.program.config);
-                    
+                    let data = require(file);
                     Object.assign(this.config, data);
                     
                 } catch(err) {
-                    console.log(err);
-                    return;
+                    throw new Error(err.toString())
                 }
+            } else {
+                throw new Error(`config file ${ file } is not defined`)
             }
         }
     }
@@ -70,7 +67,7 @@ class Entry {
             
             if (inpouringEnv.isInpour) {
                 console.log('start inpour data');
-                projectConfig.addEnv(outDir, inpouringEnv.files, inpouringEnv.data);
+                addEnv(outDir, inpouringEnv.files, inpouringEnv.data);
                 console.log('inpour finished');
             }
 
@@ -91,7 +88,7 @@ class Entry {
             console.log('start copy asset files');
             setTimeout(async () => {
                 await handleFile.main(entry, outDir);
-                projectConfig.changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
+                changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
                 console.log('copy assets success');
                 truly(true);
             },1000)
@@ -123,4 +120,17 @@ class Entry {
     }
 }
 
-export default Entry
+const program = new commander.Command()
+.version('0.0.1')
+.option('-c, --config <type>', 'config file path',) // set config file path
+.parse(process.argv);
+
+program.parse();
+
+const options = program.opts();
+
+console.log(options);
+
+new Entry(program).init().start();
+
+

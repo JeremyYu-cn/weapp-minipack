@@ -6,6 +6,7 @@ import readLine from 'readline';
 import { resolve } from 'path';
 import childProcess from 'child_process';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
+import { filterObject } from './utils/utils';
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
@@ -65,10 +66,9 @@ async function main(filePath: string, copyPath: string) {
     
     // 读取所有文件
     const fileArr = readDir(filePath);
-    
-    for (let i = 0; i < fileArr.length; i++) {
-        const tmpPath = resolve(resolve(filePath, fileArr[i]));
-        let endPath = resolve(copyPath, fileArr[i]);
+    for (let x of fileArr) {
+        const tmpPath = resolve(resolve(filePath, x));
+        let endPath = resolve(copyPath, x);
         if (checkIsDir(tmpPath)) {
             createDir(endPath);
             main(tmpPath, endPath);
@@ -89,9 +89,9 @@ async function main(filePath: string, copyPath: string) {
  */
 function readTsFile(obj: Record<string, string>, filePath: string, currentPath = '') {
     const fileArr = readDir(filePath);
-    for (let i = 0; i < fileArr.length; i++) {
-        const tmpPath = resolve(resolve(filePath, fileArr[i]));
-        const keyPath = `${ currentPath }/${ fileArr[i] }`
+    for (let x of fileArr) {
+        const tmpPath = resolve(resolve(filePath, x));
+        const keyPath = `${ currentPath }/${ x }`;
         if (checkIsDir(tmpPath)) {
             readTsFile(obj, tmpPath, keyPath)
         } else {
@@ -163,40 +163,7 @@ async function actionCompile(
     } else {
         // 写入ts文件
         if (tsFile.length) {
-            const sourcePath = [];
-            let outDirArr: string[] = [];
-            for (let compileFile of tsFile) {
-                if (TS_REG.test(compileFile.filename)) {
-                    const sourchFile = resolve(rootPath, compileFile.filename);
-                    const isImport = await checkIsImport(sourchFile)
-                    let compilePath: string | string[] = resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
-                    compilePath.splice(compilePath.length - 1, 1);
-                    compilePath = compilePath.join('/');
-                    
-                    sourcePath.push(`${ sourchFile }`);
-                    outDirArr = outDirArr.concat([`--outDir` , isImport ? copyPath : compilePath, sourchFile]);
-                }
-            }
-            if (sourcePath.length) {
-                console.log(sourcePath);
-                
-                console.log('正在编译指定文件');
-                console.time('compile');
-                
-                let args = sourcePath.concat([
-                    '--lib', 'es6,ES2017.Object,ES2015.Promise',
-                ], outDirArr);
-                if (typingDirPath.length) args = args.concat(['--types', typingDirPath.join(',')]);
-                
-                const compileResult = childProcess.spawnSync('tsc', args, { shell: true, });
-                console.log(compileResult.stdout ? compileResult.stdout.toString(): compileResult.error);
-                
-                if (inpourEnv.isInpour) {
-                    addEnv(copyPath, inpourEnv.files, inpourEnv.data);
-                }
-                console.log('编译完成');
-                console.timeEnd('compile');
-            }
+            await actionCompileTsFile(tsFile, rootPath, copyPath, typingDirPath, inpourEnv);
         }
 
         // 写入修改的文件
@@ -206,19 +173,53 @@ async function actionCompile(
     }
 }
 
-// 对象数组去重
-function filterObject(arr: { type: string, event: string, filename: string }[]) {
-    const obj: Record<string, any> = {};
-    const result: { type: string, event: string, filename: string }[] = [];
-    arr.forEach(val => {
-        const key = `${ val.type }_${ val.event }_${ val.filename }`
-        if (!obj[ key ]) {
-            obj[ key ] = 1;
-            result.push(val);
+/**
+ * 编译TS文件
+ */
+async function actionCompileTsFile(
+    tsFile: miniPack.ITsFileData[],
+    rootPath: string,
+    copyPath: string,
+    typingDirPath: string[],
+    inpourEnv: miniPack.InpouringEnvOtion,
+) {
+    const sourcePath = [];
+    let outDirArr: string[] = [];
+    for (let compileFile of tsFile) {
+        if (TS_REG.test(compileFile.filename)) {
+            const sourchFile = resolve(rootPath, compileFile.filename);
+            const isImport = await checkIsImport(sourchFile)
+            let compilePath: string | string[] = resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
+            compilePath.splice(compilePath.length - 1, 1);
+            compilePath = compilePath.join('/');
+            
+            sourcePath.push(`${ sourchFile }`);
+            outDirArr = outDirArr.concat([`--outDir` , isImport ? copyPath : compilePath, sourchFile]);
         }
-    })
-    return result;
+    }
+    if (sourcePath.length) {
+        console.log(sourcePath);
+        
+        console.log('正在编译指定文件');
+        console.time('compile');
+        
+        let args = sourcePath.concat([
+            '--lib', 'es6,ES2017.Object,ES2015.Promise',
+        ], outDirArr);
+        if (typingDirPath.length) args = args.concat(['--types', typingDirPath.join(',')]);
+        
+        const compileResult = childProcess.spawnSync('tsc', args, { shell: true, });
+        console.log(compileResult.stdout ? compileResult.stdout.toString(): compileResult.error);
+        
+        if (inpourEnv.isInpour) {
+            addEnv(copyPath, inpourEnv.files, inpourEnv.data);
+        }
+        console.log('编译完成');
+        console.timeEnd('compile');
+    }
 }
+
+
 
 /**
  *  查看文件是否有import
@@ -243,7 +244,7 @@ function checkIsImport(filePath: string): Promise<boolean>{
     
 }
 
-export {
+export default {
     EXPLORE_REG,
     readTsFile,
     main,

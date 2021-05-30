@@ -1,4 +1,5 @@
-const MiniPack = require('../dist/index');
-const pack = new MiniPack.default();
+const { MiniPack } = require('../dist/bundle');
+
+const pack = new MiniPack()
 
 pack.init().start();
