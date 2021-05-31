@@ -2,7 +2,7 @@ import Entry from './index';
 import commander from 'commander';
 
 const program = new commander.Command()
-.version('0.0.1')
+.version('0.0.2')
 .option('-c, --config <type>', 'config file path',) // set config file path
 .parse(process.argv);
 

@@ -37,7 +37,7 @@ export default class Entry {
       if (!this.program.config) {
         this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
       } else {
-        file = resolve(__dirname, this.program.config)
+        file = this.program.config
       }
     } 
 
