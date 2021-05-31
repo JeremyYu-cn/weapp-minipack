@@ -1,6 +1,6 @@
 # weapp-pack
 
-一个利用typescript小程序的打包工具
+一个利用typescript打包小程序的工具
 
 
 ## 安装
