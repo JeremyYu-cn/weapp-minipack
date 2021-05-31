@@ -1,6 +1,6 @@
 const path = require('path');
 module.exports = {
-    entry: 'src',
+    entry: path.resolve(__dirname, 'src'),
     outDir: path.resolve(__dirname, 'build'),
     isWatch: true,
     typeRoots: [

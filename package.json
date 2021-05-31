@@ -4,18 +4,21 @@
   "description": "bundler for miniprogram",
   "main": "index.ts",
   "bin": {
-    "minipack": "./dist/bundle.js"
+    "minipack": "./dist/bundle_command.js"
   },
   "scripts": {
-    "test": "node ./test/index.js",
-    "build": "rollup --config ./rollup.config.js"
+    "test:method": "node ./test/index.js",
+    "test:command": "minipack",
+    "build": "yarn build:method & yarn build:commander",
+    "build:method": "cross-env NODE_ENV=production:method rollup --config ./rollup.config.js & ",
+    "build:commander": "cross-env NODE_ENV=production:commander rollup --config ./rollup.config.js"
   },
   "keywords": [
     "wechat",
     "miniprogram"
   ],
   "author": "Jerrmy Y",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/IchliebedichZhu/minipack.git"
