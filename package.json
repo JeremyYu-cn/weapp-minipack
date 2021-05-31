@@ -1,6 +1,6 @@
 {
-  "name": "minipack",
-  "version": "0.0.1",
+  "name": "weapp-minipack",
+  "version": "0.0.2",
   "description": "a bundler for wechat miniprogram",
   "main": "./dist/bundle.js",
   "bin": {
@@ -8,14 +8,15 @@
   },
   "scripts": {
     "test:method": "node ./test/index.js",
-    "test:command": "minipack",
+    "test:command": "minipack -c ./minipack.config.js",
     "build": "yarn build:method & yarn build:commander",
     "build:method": "cross-env NODE_ENV=production:method rollup --config ./rollup.config.js & ",
     "build:commander": "cross-env NODE_ENV=production:commander rollup --config ./rollup.config.js"
   },
   "keywords": [
     "wechat",
-    "miniprogram"
+    "miniprogram",
+    "typescript"
   ],
   "author": "Jerrmy Y",
   "license": "MIT",

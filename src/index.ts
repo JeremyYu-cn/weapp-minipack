@@ -36,9 +36,13 @@ export default class Entry {
       // get config file
       if (!this.program.config) {
         this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
+      } else {
         file = resolve(__dirname, this.program.config)
       }
     } 
+
+    console.log('config file', file);
+    
     
     if (existsSync(file) && statSync(file).isFile()) {
         try {

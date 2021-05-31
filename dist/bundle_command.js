@@ -413,9 +413,12 @@ var Entry = /** @class */ (function () {
             // get config file
             if (!this.program.config) {
                 this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
+            }
+            else {
                 file = path.resolve(__dirname, this.program.config);
             }
         }
+        console.log('config file', file);
         if (fs.existsSync(file) && fs.statSync(file).isFile()) {
             try {
                 var data = require(file);
