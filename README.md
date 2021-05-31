@@ -5,14 +5,14 @@
 
 ## 安装
 
-  npm install weapp-pack -g
+>  npm install weapp-pack -g
 
-  yarn global add weapp-pack
+>  yarn global add weapp-pack
 
 
 ## 使用(cli)
 
-  minipack -c ./minipack.config.js
+>  minipack -c ./minipack.config.js
 
   ```javascript
     // minipack.config.js
