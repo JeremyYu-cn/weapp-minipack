@@ -5,9 +5,9 @@
 
 ## 安装
 
->  npm install weapp-pack -g
+>  npm install weapp-minipack -g
 
->  yarn global add weapp-pack
+>  yarn global add weapp-minipack
 
 
 ## 使用(cli)
