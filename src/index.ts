@@ -6,7 +6,6 @@ import DEFAULT_CONFIG from './config';
 
 import handleFile from './readFile';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
-
 export default class Entry {
   private DEFAULT_MINIPACK_CONFIG_PATH: string;
   private program: null | commander.Command;
@@ -37,7 +36,8 @@ export default class Entry {
       if (!this.program.config) {
         this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
       } else {
-        file = this.program.config
+        const isFullPath = /^\/.*/.test(this.program.config);
+        file = isFullPath ? this.program.config : resolve(process.cwd(), this.program.config);
       }
     } 
 

@@ -415,7 +415,8 @@ var Entry = /** @class */ (function () {
                 this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
             }
             else {
-                file = path.resolve(__dirname, this.program.config);
+                var isFullPath = /^\/.*/.test(this.program.config);
+                file = isFullPath ? this.program.config : path.resolve(process.cwd(), this.program.config);
             }
         }
         console.log('config file', file);
@@ -2395,7 +2396,7 @@ commander.Option;
 commander.CommanderError;
 
 var program = new commander.Command()
-    .version('0.0.1')
+    .version('0.0.2')
     .option('-c, --config <type>', 'config file path') // set config file path
     .parse(process.argv);
 program.parse();

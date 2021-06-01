@@ -410,7 +410,8 @@ var Entry = /** @class */ (function () {
                 this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
             }
             else {
-                file = path.resolve(__dirname, this.program.config);
+                var isFullPath = /^\/.*/.test(this.program.config);
+                file = isFullPath ? this.program.config : path.resolve(process.cwd(), this.program.config);
             }
         }
         console.log('config file', file);
