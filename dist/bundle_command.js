@@ -74,10 +74,10 @@ function __generator(thisArg, body) {
 var config = {
     env: process.env.NODE_ENV || 'none',
     entry: '',
-    outDir: path.resolve(__dirname, '../dist'),
+    outDir: path.resolve(process.cwd(), 'dist'),
     isTs: true,
-    tsConfigPath: path.resolve(__dirname, '../tsconfig.json'),
-    miniprogramProjectPath: path.resolve(__dirname, '../project.config.json'),
+    tsConfigPath: '',
+    miniprogramProjectPath: path.resolve(process.cwd(), '../project.config.json'),
     miniprogramProjectConfig: {},
     isWatch: false,
     inpouringEnv: {
@@ -419,11 +419,15 @@ var Entry = /** @class */ (function () {
                 file = isFullPath ? this.program.config : path.resolve(process.cwd(), this.program.config);
             }
         }
-        console.log('config file', file);
         if (fs.existsSync(file) && fs.statSync(file).isFile()) {
             try {
                 var data = require(file);
                 Object.assign(this.config, data);
+                console.log(this.config);
+                if (!this.config.tsConfigPath)
+                    throw new Error('tsConfigPath must defined');
+                if (!fs.existsSync(file) || !fs.statSync(file).isFile())
+                    throw new Error('tsConfigPath path is not found');
             }
             catch (err) {
                 throw new Error(err.toString());
@@ -471,12 +475,12 @@ var Entry = /** @class */ (function () {
     Entry.prototype.copyFile = function () {
         var _this = this;
         return new Promise(function (truly) {
-            var _a = _this.config, entry = _a.entry, outDir = _a.outDir, miniprogramProjectConfig = _a.miniprogramProjectConfig, miniprogramProjectPath = _a.miniprogramProjectPath;
+            var _a = _this.config, watchEntry = _a.watchEntry, outDir = _a.outDir, miniprogramProjectConfig = _a.miniprogramProjectConfig, miniprogramProjectPath = _a.miniprogramProjectPath;
             console.log('start copy asset files');
             setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, handleFile.main(entry, outDir)];
+                        case 0: return [4 /*yield*/, handleFile.main(watchEntry, outDir)];
                         case 1:
                             _a.sent();
                             changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
@@ -492,10 +496,10 @@ var Entry = /** @class */ (function () {
      * watchFile
      */
     Entry.prototype.watchFile = function () {
-        var _a = this.config, isWatch = _a.isWatch, entry = _a.entry, outDir = _a.outDir, tsConfigPath = _a.tsConfigPath, miniprogramProjectConfig = _a.miniprogramProjectConfig, miniprogramProjectPath = _a.miniprogramProjectPath, inpouringEnv = _a.inpouringEnv, typeRoots = _a.typeRoots;
+        var _a = this.config, isWatch = _a.isWatch, watchEntry = _a.watchEntry, outDir = _a.outDir, tsConfigPath = _a.tsConfigPath, miniprogramProjectConfig = _a.miniprogramProjectConfig, miniprogramProjectPath = _a.miniprogramProjectPath, inpouringEnv = _a.inpouringEnv, typeRoots = _a.typeRoots;
         if (isWatch) {
             var watchOption = {
-                rootPath: entry,
+                rootPath: watchEntry,
                 copyPath: outDir,
                 tsconfigPath: tsConfigPath,
                 inpourEnv: inpouringEnv,

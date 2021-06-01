@@ -18,9 +18,10 @@
     // minipack.config.js
     const path = require('path');
     module.exports = {
-        entry: path.resolve(__dirname, 'src'),
+        tsConfigPath: path.resolve(__dirname, 'tsconfig.json'),
         outDir: path.resolve(__dirname, 'build'),
         isWatch: true,
+        watchEntry: path.resolve(__dirname, 'src'),
         typeRoots: [
             path.resolve(__dirname, './typings'),
             path.resolve(__dirname, 'node_modules/@types/node')
@@ -31,17 +32,17 @@
 ## config配置
 
 * env: **string** 当前的运行环境
-* entry: **string** 小程序入口文件夹
+* watchEntry: **string** 监听文件变化时，复制TS意外的文件时使用的入口文件夹
 * outDir: **string** 输出的目录,
 * isTs: **string** 代码是否为typescript(待用),
 * tsConfigPath: **string** tsconfig.json文件路径
 * miniprogramProjectPath: **string** 小程序project.config.json配置文件路径,
 * miniprogramProjectConfig: **object** 需要修改 project.config.json 中的数据,
-* isWatch: boolean 是否开启监听文件变化,
-* inpouringEnv: Object 注入环境变量
-* inpouringEnv.isInpour boolean 是否注入
-* inpouringEnv.files array string 需要注入的文件路径
-* inpouringEnv.data string 需要注入的信息
+* isWatch: **boolean** 是否开启监听文件变化,
+* inpouringEnv: **Object** 注入环境变量
+* inpouringEnv.isInpour **boolean 是否注入
+* inpouringEnv.files **array string** 需要注入的文件路径
+* inpouringEnv.data **string** 需要注入的信息
 
 
 ## 使用(调用实例方法)

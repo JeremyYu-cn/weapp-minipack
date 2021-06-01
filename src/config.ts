@@ -4,11 +4,11 @@
 import { resolve } from 'path';
 const config: miniPack.IConfigOption = {
     env: process.env.NODE_ENV || 'none',
-    entry: '',
-    outDir: resolve(__dirname, '../dist'),
+    watchEntry: '',
+    outDir: resolve(process.cwd(), 'dist'),
     isTs: true,
-    tsConfigPath: resolve(__dirname, '../tsconfig.json'),
-    miniprogramProjectPath: resolve(__dirname, '../project.config.json'),
+    tsConfigPath: '',
+    miniprogramProjectPath: resolve(process.cwd(), '../project.config.json'),
     miniprogramProjectConfig: {},
     isWatch: false,
     inpouringEnv: {

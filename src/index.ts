@@ -39,16 +39,16 @@ export default class Entry {
         const isFullPath = /^\/.*/.test(this.program.config);
         file = isFullPath ? this.program.config : resolve(process.cwd(), this.program.config);
       }
-    } 
-
-    console.log('config file', file);
-    
+    }
     
     if (existsSync(file) && statSync(file).isFile()) {
         try {
           let data = require(file);
           Object.assign(this.config, data);
-            
+          console.log(this.config);
+          if (!this.config.tsConfigPath) throw new Error('tsConfigPath must defined');
+          if (!existsSync(file) || !statSync(file).isFile()) throw new Error('tsConfigPath path is not found');
+          
         } catch(err) {
           throw new Error(err.toString())
         }
@@ -66,6 +66,7 @@ export default class Entry {
     } = this.config;
     
     console.log('compile start');
+    
     const result = childProcess.spawnSync(`tsc`,[`--project`, tsConfigPath, '--outDir', outDir,], { shell: true, });
     if (result.status === 0) {
       console.log('compile finished');
@@ -89,10 +90,10 @@ export default class Entry {
    */
   copyFile() {
     return new Promise(truly => {
-      const { entry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
+      const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
       console.log('start copy asset files');
       setTimeout(async () => {
-        await handleFile.main(entry, outDir);
+        await handleFile.main(watchEntry, outDir);
         changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
         console.log('copy assets success');
         truly(true);
@@ -106,14 +107,14 @@ export default class Entry {
    */
   watchFile() {
     const {
-      isWatch, entry, outDir, tsConfigPath,
+      isWatch, watchEntry, outDir, tsConfigPath,
       miniprogramProjectConfig, miniprogramProjectPath,
       inpouringEnv, typeRoots,
     } = this.config;
     
     if (isWatch) {
       const watchOption: miniPack.IWatchFileOption = {
-        rootPath: entry,
+        rootPath: watchEntry,
         copyPath: outDir,
         tsconfigPath: tsConfigPath,
         inpourEnv: inpouringEnv,

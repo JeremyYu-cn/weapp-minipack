@@ -7,9 +7,9 @@ declare module miniPack {
         env: string
 
         /**
-         * your program's entry file path
+         * your program's watch file entry path
          */
-        entry: string
+         watchEntry: string
 
         /**
          * output file root path
