@@ -48,7 +48,7 @@
 ## 使用(调用实例方法)
 
 ```javascript
-  const MiniPack = require('weapp-pack');
+  const MiniPack = require('weapp-minipack');
   const path = require('path');
   const pack = new MiniPack({ configPath: path.resolve(__dirname, '..', 'minipack.config.js') });
   pack.init().start();
