@@ -12,7 +12,7 @@
 
 ## 使用(cli)
 
->  minipack -c ./minipack.config.js
+>  weapp-minipack -c ./minipack.config.js
 
   ```javascript
     // minipack.config.js
