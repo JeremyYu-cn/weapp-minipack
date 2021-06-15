@@ -24,6 +24,21 @@ function readDir(filePath: string) {
 }
 
 /**
+ * 获取文件夹内所有文件
+ */
+function getDirAllFile(filePath: string) {
+    const fileArr = [];
+    if (checkIsDir(filePath)) {
+        const fileList = readdirSync(filePath);
+        // fileList.forEach(val => {
+
+        // })
+        return []
+    }
+    return [];
+}
+
+/**
  * 复制所有文件
  */
 function copyFile(beginPath: string, endPath: string) {
@@ -250,5 +265,6 @@ export default {
     main,
     watchFile,
     checkIsImport,
+    getDirAllFile,
 }
 
