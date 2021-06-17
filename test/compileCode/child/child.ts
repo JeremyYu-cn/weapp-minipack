@@ -1,3 +1,2 @@
-const child = 11111;
+export const child = 11111;
 
-console.log(child);

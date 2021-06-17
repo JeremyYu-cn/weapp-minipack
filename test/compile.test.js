@@ -1,4 +1,5 @@
 import { translateCode } from '../src/compile/compile';
+// import readFile from '../src/readFile';
 import path from 'path';
 
 const entry = [
@@ -20,5 +21,22 @@ test('translate code', async () => {
   expect(result).toBeTruthy();
 });
 
+// /**
+//  * 测试读取所有文件
+//  */
+// test('get file path', async () => {
+//   const fileDir = path.resolve(__dirname, 'compileCode');
+//   const arr = readFile.getDirAllFile(fileDir);
+//   expect(true).toBeTruthy();
+// })
+
+// /**
+//  * 测试读取所有文件
+//  */
+//  test('get file path', async () => {
+//   const fileDir = path.resolve(__dirname, 'compileCode');
+//   const arr = readFile.getDirAllFile(fileDir);
+//   expect(true).toBeTruthy();
+// })
 
 
