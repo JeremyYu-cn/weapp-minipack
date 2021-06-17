@@ -1,6 +1,6 @@
 const path = require('path');
 module.exports = {
-    watchEntry: path.resolve(__dirname, 'experience'),
+    watchEntry: path.resolve(__dirname, 'test','compileCode'),
     tsConfigPath: path.resolve(__dirname, 'tsconfig.json'),
     outDir: path.resolve(__dirname, 'build'),
     isWatch: true,

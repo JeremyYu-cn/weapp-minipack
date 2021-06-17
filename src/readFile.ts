@@ -7,6 +7,7 @@ import { resolve } from 'path';
 import childProcess from 'child_process';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
 import { filterObject } from './utils/utils';
+import { translateCode } from './compile/compile';
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
@@ -27,13 +28,20 @@ function readDir(filePath: string) {
  * 获取文件夹内所有文件
  */
 function getDirAllFile(filePath: string) {
-    const fileArr = [];
+    let fileArr: string[] = [];
+    
     if (checkIsDir(filePath)) {
         const fileList = readdirSync(filePath);
-        // fileList.forEach(val => {
-
-        // })
-        return []
+        
+        fileList.forEach(val => {
+            const tmpPath = resolve(filePath,val)
+            if (checkIsDir(tmpPath)) {
+                fileArr = fileArr.concat(getDirAllFile(tmpPath));
+            } else {
+                fileArr.push(tmpPath);
+            }
+        })
+        return fileArr
     }
     return [];
 }
@@ -102,20 +110,21 @@ async function main(filePath: string, copyPath: string) {
 /**
  * 读取所有ts文件
  */
-function readTsFile(obj: Record<string, string>, filePath: string, currentPath = '') {
+function readTsFile(filePath: string, currentPath = '') {
     const fileArr = readDir(filePath);
+    let resultArr: string[] = [];
     for (let x of fileArr) {
-        const tmpPath = resolve(resolve(filePath, x));
+        const tmpPath = resolve(filePath, x);
         const keyPath = `${ currentPath }/${ x }`;
         if (checkIsDir(tmpPath)) {
-            readTsFile(obj, tmpPath, keyPath)
+            resultArr = resultArr.concat(readTsFile(tmpPath, keyPath));
         } else {
             if (TS_REG.test(keyPath)) {
-                const key = keyPath.replace(/.ts$/, '');
-                obj[key] = tmpPath;
+                resultArr.push(tmpPath);
             }
         }
     }
+    return resultArr;
 }
 
 /**
@@ -198,40 +207,27 @@ async function actionCompileTsFile(
     typingDirPath: string[],
     inpourEnv: miniPack.InpouringEnvOtion,
 ) {
-    const sourcePath = [];
-    let outDirArr: string[] = [];
+    console.log('正在编译指定文件');
+    console.time('compile');
     for (let compileFile of tsFile) {
-        if (TS_REG.test(compileFile.filename)) {
-            const sourchFile = resolve(rootPath, compileFile.filename);
-            const isImport = await checkIsImport(sourchFile)
-            let compilePath: string | string[] = resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
-            compilePath.splice(compilePath.length - 1, 1);
-            compilePath = compilePath.join('/');
-            
-            sourcePath.push(`${ sourchFile }`);
-            outDirArr = outDirArr.concat([`--outDir` , isImport ? copyPath : compilePath, sourchFile]);
-        }
-    }
-    if (sourcePath.length) {
-        console.log(sourcePath);
+        const sourchFile = resolve(rootPath, compileFile.filename);
+        let compilePath: string | string[] = resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
+        compilePath.splice(compilePath.length - 1, 1);
+        compilePath = compilePath.join('/');
         
-        console.log('正在编译指定文件');
-        console.time('compile');
-        
-        let args = sourcePath.concat([
-            '--lib', 'es6,ES2017.Object,ES2015.Promise',
-        ], outDirArr);
-        if (typingDirPath.length) args = args.concat(['--types', typingDirPath.join(',')]);
-        
-        const compileResult = childProcess.spawnSync('tsc', args, { shell: true, });
-        console.log(compileResult.stdout ? compileResult.stdout.toString(): compileResult.error);
-        
+        const result = await translateCode({
+            format: 'cjs',
+            entryPoints: [ sourchFile ],
+            minify: true,
+            outdir: compilePath,
+        })
+        console.log(result);
         if (inpourEnv.isInpour) {
             addEnv(copyPath, inpourEnv.files, inpourEnv.data);
         }
-        console.log('编译完成');
-        console.timeEnd('compile');
     }
+    console.log('编译完成');
+    console.timeEnd('compile');
 }
 
 

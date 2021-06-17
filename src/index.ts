@@ -1,4 +1,4 @@
-import childProcess from 'child_process';
+// import childProcess from 'child_process';
 import { resolve } from 'path';
 import { statSync, existsSync, } from 'fs';
 import type commander from 'commander';
@@ -6,6 +6,7 @@ import DEFAULT_CONFIG from './config';
 
 import handleFile from './readFile';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
+import { translateCode } from './compile/compile';
 export default class Entry {
   private DEFAULT_MINIPACK_CONFIG_PATH: string;
   private program: null | commander.Command;
@@ -62,15 +63,21 @@ export default class Entry {
    */
   async start() {
     const {
-      tsConfigPath, outDir, inpouringEnv
+      watchEntry, outDir, inpouringEnv
     } = this.config;
     
     console.log('compile start');
+    const fileList = handleFile.readTsFile(watchEntry)
     
-    const result = childProcess.spawnSync(`tsc`,[`--project`, tsConfigPath, '--outDir', outDir,], { shell: true, });
-    if (result.status === 0) {
+    const compileResult = await translateCode({
+      format: 'cjs',
+      entryPoints: fileList,
+      minify: true,
+      outdir: outDir,
+    })
+    // const result = childProcess.spawnSync(`tsc`,[`--project`, tsConfigPath, '--outDir', outDir,], { shell: true, });
+    if (compileResult) {
       console.log('compile finished');
-      
       if (inpouringEnv.isInpour) {
         console.log('start inpour data');
         addEnv(outDir, inpouringEnv.files, inpouringEnv.data);
@@ -80,7 +87,6 @@ export default class Entry {
       await this.copyFile();
       this.watchFile();
     } else {
-      console.log(result.stdout.toString('utf-8'))
       return;
     }
   }
