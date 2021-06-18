@@ -7,11 +7,12 @@ import { resolve } from 'path';
 import childProcess from 'child_process';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
 import { filterObject } from './utils/utils';
-import { translateCode } from './compile/compile';
+import { minifierHtml, translateCode } from './compile/compile';
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
 const IMPORT_REG = /import.*from.*/;
+const HTML_CSS_REG = /.*\.(wxml|wxss)$/;
 
 /**
  * 读取文件夹
@@ -86,7 +87,6 @@ function checkFileIsSame(pathA: string, pathB: string) {
  * 拷贝文件
  */
 async function main(filePath: string, copyPath: string) {
-    
     // 读取所有文件
     const fileArr = readDir(filePath);
     for (let x of fileArr) {
@@ -95,10 +95,14 @@ async function main(filePath: string, copyPath: string) {
         if (checkIsDir(tmpPath)) {
             createDir(endPath);
             main(tmpPath, endPath);
-        } else {
-            if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
-                if (existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
-                    continue;
+        } else if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
+            if (existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
+                continue;
+            } else {
+                if (HTML_CSS_REG.test(tmpPath)) {
+                    console.log('tmpPath', tmpPath);
+                    
+                    minifierHtml(tmpPath, endPath);
                 } else {
                     copyFile(tmpPath, endPath);
                 }

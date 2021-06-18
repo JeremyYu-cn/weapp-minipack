@@ -16,7 +16,6 @@ export default class Entry {
     this.program = command || null;
     this.DEFAULT_MINIPACK_CONFIG_PATH = configPath || resolve(__dirname, '../minipack.config.js')
     this.config = DEFAULT_CONFIG;
-      
   }
 
   /**
@@ -46,7 +45,6 @@ export default class Entry {
         try {
           let data = require(file);
           Object.assign(this.config, data);
-          console.log(this.config);
           if (!this.config.tsConfigPath) throw new Error('tsConfigPath must defined');
           if (!existsSync(file) || !statSync(file).isFile()) throw new Error('tsConfigPath path is not found');
           

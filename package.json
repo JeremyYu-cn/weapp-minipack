@@ -1,6 +1,6 @@
 {
   "name": "weapp-minipack",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "a bundler for wechat miniprogram",
   "main": "./dist/bundle.js",
   "bin": {
@@ -26,8 +26,10 @@
     "url": "https://github.com/IchliebedichZhu/weapp-minipack.git"
   },
   "dependencies": {
+    "@types/html-minifier": "^4.0.0",
     "commander": "^6.2.1",
-    "esbuild": "^0.12.7"
+    "esbuild": "^0.12.7",
+    "html-minifier": "^4.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.14.4",

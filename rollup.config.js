@@ -13,7 +13,10 @@ module.exports = {
     format: 'cjs',
     banner: isCommander ? '#!/usr/bin/env node' : '',
   },
-  external: ['fs', 'child_process', 'path', 'readline', 'events', 'esbuild'],
+  external: [
+    'fs', 'child_process', 'path', 'readline',
+    'events', 'esbuild', 'stream', 'html-minifier'
+  ],
   plugins: [
     resolve(),
     commonjs(),

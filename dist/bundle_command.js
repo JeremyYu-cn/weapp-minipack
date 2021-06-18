@@ -6,6 +6,7 @@ var fs = require('fs');
 var readLine = require('readline');
 var childProcess = require('child_process');
 var esbuild = require('esbuild');
+var htmlMinifier = require('html-minifier');
 var events = require('events');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
@@ -87,6 +88,11 @@ function filterObject(arr) {
     return result;
 }
 
+/**
+ * 压缩代码主方法
+ * @param options esbuild options
+ * @returns
+ */
 async function translateCode(options) {
     try {
         const result = await esbuild.build(options);
@@ -98,10 +104,31 @@ async function translateCode(options) {
         return false;
     }
 }
+/**
+ * 压缩HTML CSS文件
+ * @param filePath
+ * @param endPath
+ * @returns
+ */
+function minifierHtml(filePath, endPath) {
+    const result = htmlMinifier.minify(fs.readFileSync(filePath, { encoding: 'utf-8' }), {
+        minifyCSS: true,
+        removeComments: true,
+        removeEmptyAttributes: true,
+        removeEmptyElements: true,
+        removeOptionalTags: true,
+        removeScriptTypeAttributes: true,
+        collapseWhitespace: true,
+    });
+    console.log(result);
+    fs.writeFileSync(endPath, result, { encoding: 'utf-8' });
+    return true;
+}
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
 const IMPORT_REG = /import.*from.*/;
+const HTML_CSS_REG = /.*\.(wxml|wxss)$/;
 /**
  * 读取文件夹
  */
@@ -178,10 +205,14 @@ async function main(filePath, copyPath) {
             createDir(endPath);
             main(tmpPath, endPath);
         }
-        else {
-            if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
-                if (fs.existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
-                    continue;
+        else if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
+            if (fs.existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
+                continue;
+            }
+            else {
+                if (HTML_CSS_REG.test(tmpPath)) {
+                    console.log('tmpPath', tmpPath);
+                    minifierHtml(tmpPath, endPath);
                 }
                 else {
                     copyFile(tmpPath, endPath);
@@ -358,7 +389,6 @@ class Entry {
             try {
                 let data = require(file);
                 Object.assign(this.config, data);
-                console.log(this.config);
                 if (!this.config.tsConfigPath)
                     throw new Error('tsConfigPath must defined');
                 if (!fs.existsSync(file) || !fs.statSync(file).isFile())

@@ -1,0 +1,19 @@
+/**index.wxss**/
+.main {
+  background: #f9f9f9;
+  font-family: 'font-light';
+}
+.notify {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.close_icon {
+  position: absolute;
+  bottom: -80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
