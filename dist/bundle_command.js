@@ -3,19 +3,20 @@
 
 var path = require('path');
 var fs = require('fs');
-var readLine = require('readline');
-var childProcess = require('child_process');
 var esbuild = require('esbuild');
 var htmlMinifier = require('html-minifier');
+require('readline');
+var crypto = require('crypto');
 var events = require('events');
+var child_process = require('child_process');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 var path__default = /*#__PURE__*/_interopDefaultLegacy(path);
 var fs__default = /*#__PURE__*/_interopDefaultLegacy(fs);
-var readLine__default = /*#__PURE__*/_interopDefaultLegacy(readLine);
-var childProcess__default = /*#__PURE__*/_interopDefaultLegacy(childProcess);
+var crypto__default = /*#__PURE__*/_interopDefaultLegacy(crypto);
 var events__default = /*#__PURE__*/_interopDefaultLegacy(events);
+var child_process__default = /*#__PURE__*/_interopDefaultLegacy(child_process);
 
 /**
  * default config
@@ -96,7 +97,6 @@ function filterObject(arr) {
 async function translateCode(options) {
     try {
         const result = await esbuild.build(options);
-        console.log('build result', result);
         return result;
     }
     catch (err) {
@@ -120,15 +120,98 @@ function minifierHtml(filePath, endPath) {
         removeScriptTypeAttributes: true,
         collapseWhitespace: true,
     });
-    console.log(result);
     fs.writeFileSync(endPath, result, { encoding: 'utf-8' });
     return true;
+}
+/**
+ * 编译TS文件
+ */
+async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv) {
+    console.log('正在编译指定文件');
+    console.time('compile');
+    for (let compileFile of tsFile) {
+        const sourchFile = path.resolve(rootPath, compileFile.filename);
+        let compilePath = path.resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
+        compilePath.splice(compilePath.length - 1, 1);
+        compilePath = compilePath.join('/');
+        const result = await translateCode({
+            format: 'cjs',
+            entryPoints: [sourchFile],
+            minify: true,
+            outdir: compilePath,
+        });
+        console.log(result);
+        if (inpourEnv.isInpour) {
+            addEnv(copyPath, inpourEnv.files, inpourEnv.data);
+        }
+    }
+    console.log('编译完成');
+    console.timeEnd('compile');
+}
+/**
+ * 监听文件开始编译
+ */
+async function actionCompile(fileArr, option) {
+    const { rootPath, inpourEnv, miniprogramProjectConfig, miniprogramProjectPath, } = option;
+    let { copyPath } = option;
+    // 对象去重
+    fileArr = filterObject(fileArr);
+    // 判断是否有文件新增或删除
+    const isReadName = fileArr.filter(val => val.event === 'rename').length > 0;
+    // ts之外的文件
+    const assetsFile = fileArr.filter(val => val.type === 'asset');
+    // ts文件
+    const tsFile = fileArr.filter(val => val.type === 'ts');
+    // 有文件新增或删除为重新编译
+    if (isReadName) {
+        // const compileResult = childProcess.spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath], { shell: true });
+        const fileList = readTsFile(rootPath);
+        const compileResult = await translateCode({
+            format: 'cjs',
+            entryPoints: fileList,
+            minify: true,
+            outdir: copyPath,
+        });
+        if (compileResult) {
+            if (inpourEnv.isInpour) {
+                addEnv(copyPath, inpourEnv.files, inpourEnv.data);
+            }
+            changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
+        }
+        // 重新写入文件
+        startCompile(rootPath, copyPath);
+    }
+    else {
+        // 写入ts文件
+        if (tsFile.length) {
+            await actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv);
+        }
+        // 写入修改的文件
+        for (let assetFile of assetsFile) {
+            copyFile(path.resolve(rootPath, assetFile.filename), path.resolve(copyPath, assetFile.filename));
+        }
+    }
+}
+
+/**
+ * 判断是否是文件夹
+ */
+function checkIsDir(filePath) {
+    return fs.statSync(filePath).isDirectory();
+}
+/**
+ * 判断两个文件大小是否相等
+ */
+function checkFileIsSame(pathA, pathB) {
+    const fileA_MD5 = crypto__default['default'].createHash('md5').update(fs.readFileSync(pathA)).digest('hex');
+    const fileB_MD5 = crypto__default['default'].createHash('md5').update(fs.readFileSync(pathB)).digest('hex');
+    return fileA_MD5 === fileB_MD5;
 }
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
-const IMPORT_REG = /import.*from.*/;
 const HTML_CSS_REG = /.*\.(wxml|wxss)$/;
+
 /**
  * 读取文件夹
  */
@@ -141,27 +224,7 @@ function readDir(filePath) {
     }
 }
 /**
- * 获取文件夹内所有文件
- */
-function getDirAllFile(filePath) {
-    let fileArr = [];
-    if (checkIsDir(filePath)) {
-        const fileList = fs.readdirSync(filePath);
-        fileList.forEach(val => {
-            const tmpPath = path.resolve(filePath, val);
-            if (checkIsDir(tmpPath)) {
-                fileArr = fileArr.concat(getDirAllFile(tmpPath));
-            }
-            else {
-                fileArr.push(tmpPath);
-            }
-        });
-        return fileArr;
-    }
-    return [];
-}
-/**
- * 复制所有文件
+ * 用流的方式复制文件
  */
 function copyFile(beginPath, endPath) {
     if (fs.existsSync(beginPath) && !checkIsDir(beginPath)) {
@@ -169,12 +232,6 @@ function copyFile(beginPath, endPath) {
         const writeStream = fs.createWriteStream(endPath);
         readStream.pipe(writeStream);
     }
-}
-/**
- * 判断是否是文件夹
- */
-function checkIsDir(filePath) {
-    return fs.statSync(filePath).isDirectory();
 }
 /**
  * 创建文件夹
@@ -185,17 +242,9 @@ function createDir(filePath) {
     }
 }
 /**
- * 判断两个文件大小是否相等
- */
-function checkFileIsSame(pathA, pathB) {
-    const fileASize = fs.statSync(pathA).size;
-    const fileBSize = fs.statSync(pathB).size;
-    return fileASize === fileBSize;
-}
-/**
  * 拷贝文件
  */
-async function main(filePath, copyPath) {
+async function startCompile(filePath, copyPath) {
     // 读取所有文件
     const fileArr = readDir(filePath);
     for (let x of fileArr) {
@@ -203,7 +252,7 @@ async function main(filePath, copyPath) {
         let endPath = path.resolve(copyPath, x);
         if (checkIsDir(tmpPath)) {
             createDir(endPath);
-            main(tmpPath, endPath);
+            startCompile(tmpPath, endPath);
         }
         else if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
             if (fs.existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
@@ -211,7 +260,6 @@ async function main(filePath, copyPath) {
             }
             else {
                 if (HTML_CSS_REG.test(tmpPath)) {
-                    console.log('tmpPath', tmpPath);
                     minifierHtml(tmpPath, endPath);
                 }
                 else {
@@ -241,6 +289,7 @@ function readTsFile(filePath, currentPath = '') {
     }
     return resultArr;
 }
+
 /**
  * 监听文件改动
  */
@@ -262,100 +311,7 @@ function watchFile(option, during = 500) {
         }, during);
     });
 }
-/**
- * 监听文件开始编译
- */
-async function actionCompile(fileArr, option) {
-    const { rootPath, tsconfigPath, inpourEnv, miniprogramProjectConfig, miniprogramProjectPath, typingDirPath, } = option;
-    let { copyPath } = option;
-    // 对象去重
-    fileArr = filterObject(fileArr);
-    // 判断是否有文件新增或删除
-    const isReadName = fileArr.filter(val => val.event === 'rename').length > 0;
-    // ts之外的文件
-    const assetsFile = fileArr.filter(val => val.type === 'asset');
-    // ts文件
-    const tsFile = fileArr.filter(val => val.type === 'ts');
-    // 有文件新增或删除为重新编译
-    if (isReadName) {
-        const compileResult = childProcess__default['default'].spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath], { shell: true });
-        if (compileResult.status === 0) {
-            if (inpourEnv.isInpour) {
-                addEnv(copyPath, inpourEnv.files, inpourEnv.data);
-            }
-            changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
-        }
-        // 重新写入文件
-        main(rootPath, copyPath);
-    }
-    else {
-        // 写入ts文件
-        if (tsFile.length) {
-            await actionCompileTsFile(tsFile, rootPath, copyPath, typingDirPath, inpourEnv);
-        }
-        // 写入修改的文件
-        for (let assetFile of assetsFile) {
-            copyFile(path.resolve(rootPath, assetFile.filename), path.resolve(copyPath, assetFile.filename));
-        }
-    }
-}
-/**
- * 编译TS文件
- */
-async function actionCompileTsFile(tsFile, rootPath, copyPath, typingDirPath, inpourEnv) {
-    console.log('正在编译指定文件');
-    console.time('compile');
-    for (let compileFile of tsFile) {
-        const sourchFile = path.resolve(rootPath, compileFile.filename);
-        let compilePath = path.resolve(copyPath, compileFile.filename).replace(/\\/g, '\/').split('\/');
-        compilePath.splice(compilePath.length - 1, 1);
-        compilePath = compilePath.join('/');
-        const result = await translateCode({
-            format: 'cjs',
-            entryPoints: [sourchFile],
-            minify: true,
-            outdir: compilePath,
-        });
-        console.log(result);
-        if (inpourEnv.isInpour) {
-            addEnv(copyPath, inpourEnv.files, inpourEnv.data);
-        }
-    }
-    console.log('编译完成');
-    console.timeEnd('compile');
-}
-/**
- *  查看文件是否有import
- * @param filePath 文件路径
- */
-function checkIsImport(filePath) {
-    return new Promise(finished => {
-        if (checkIsDir(filePath))
-            finished(false);
-        const readStream = fs.createReadStream(filePath);
-        const rl = readLine__default['default'].createInterface(readStream);
-        let isImport = false;
-        rl.on('line', (lineData) => {
-            if (IMPORT_REG.test(lineData)) {
-                isImport = true;
-                rl.close();
-            }
-        });
-        rl.on('close', () => {
-            finished(isImport);
-        });
-    });
-}
-var handleFile = {
-    EXPLORE_REG,
-    readTsFile,
-    main,
-    watchFile,
-    checkIsImport,
-    getDirAllFile,
-};
 
-// import childProcess from 'child_process';
 class Entry {
     constructor(data) {
         const { configPath, command } = data;
@@ -408,7 +364,7 @@ class Entry {
     async start() {
         const { watchEntry, outDir, inpouringEnv } = this.config;
         console.log('compile start');
-        const fileList = handleFile.readTsFile(watchEntry);
+        const fileList = readTsFile(watchEntry);
         const compileResult = await translateCode({
             format: 'cjs',
             entryPoints: fileList,
@@ -438,7 +394,7 @@ class Entry {
             const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
             console.log('start copy asset files');
             setTimeout(async () => {
-                await handleFile.main(watchEntry, outDir);
+                await startCompile(watchEntry, outDir);
                 changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
                 console.log('copy assets success');
                 truly(true);
@@ -460,7 +416,7 @@ class Entry {
                 miniprogramProjectConfig,
                 typingDirPath: typeRoots,
             };
-            handleFile.watchFile(watchOption);
+            watchFile(watchOption);
         }
     }
 }
@@ -475,7 +431,7 @@ var commander = createCommonjsModule(function (module, exports) {
  */
 
 const EventEmitter = events__default['default'].EventEmitter;
-const spawn = childProcess__default['default'].spawn;
+const spawn = child_process__default['default'].spawn;
 
 
 

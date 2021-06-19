@@ -1,13 +1,13 @@
-// import childProcess from 'child_process';
 import { resolve } from 'path';
 import { statSync, existsSync, } from 'fs';
 import type commander from 'commander';
 import DEFAULT_CONFIG from './config';
 
-import handleFile from './readFile';
+import { readTsFile, startCompile } from './controlFile/readFile';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
 import { translateCode } from './compile/compile';
-export default class Entry {
+import { watchFile } from './controlFile/watchFile';
+export class Entry {
   private DEFAULT_MINIPACK_CONFIG_PATH: string;
   private program: null | commander.Command;
   private config: miniPack.IConfigOption
@@ -65,8 +65,7 @@ export default class Entry {
     } = this.config;
     
     console.log('compile start');
-    const fileList = handleFile.readTsFile(watchEntry)
-    
+    const fileList = readTsFile(watchEntry)
     const compileResult = await translateCode({
       format: 'cjs',
       entryPoints: fileList,
@@ -97,7 +96,7 @@ export default class Entry {
       const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
       console.log('start copy asset files');
       setTimeout(async () => {
-        await handleFile.main(watchEntry, outDir);
+        await startCompile(watchEntry, outDir);
         changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
         console.log('copy assets success');
         truly(true);
@@ -126,7 +125,7 @@ export default class Entry {
         miniprogramProjectConfig,
         typingDirPath: typeRoots,
       }
-      handleFile.watchFile(watchOption);
+      watchFile(watchOption);
     }
   }
 }

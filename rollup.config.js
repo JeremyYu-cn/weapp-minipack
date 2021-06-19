@@ -15,7 +15,8 @@ module.exports = {
   },
   external: [
     'fs', 'child_process', 'path', 'readline',
-    'events', 'esbuild', 'stream', 'html-minifier'
+    'events', 'esbuild', 'stream', 'html-minifier',
+    'crypto'
   ],
   plugins: [
     resolve(),

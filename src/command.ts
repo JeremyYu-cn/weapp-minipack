@@ -1,4 +1,4 @@
-import Entry from './index';
+import { Entry } from './index';
 import commander from 'commander';
 
 const program = new commander.Command()

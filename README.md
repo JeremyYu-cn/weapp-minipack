@@ -18,14 +18,15 @@
     // minipack.config.js
     const path = require('path');
     module.exports = {
-        tsConfigPath: path.resolve(__dirname, 'tsconfig.json'),
-        outDir: path.resolve(__dirname, 'build'),
-        isWatch: true,
-        watchEntry: path.resolve(__dirname, 'src'),
-        typeRoots: [
-            path.resolve(__dirname, './typings'),
-            path.resolve(__dirname, 'node_modules/@types/node')
-        ],
+      watchEntry: path.resolve(__dirname, 'miniprogram'),
+      tsConfigPath: path.resolve(__dirname, 'tsconfig.json'),
+      outDir: path.resolve(__dirname, 'build'),
+      isWatch: true,
+      watchEntry: path.resolve(__dirname, 'src'),
+      typeRoots: [
+          path.resolve(__dirname, './typings'),
+          path.resolve(__dirname, 'node_modules/@types/node')
+      ],
     }
   ```
 
@@ -48,9 +49,9 @@
 ## 使用(调用实例方法)
 
 ```javascript
-  const MiniPack = require('weapp-minipack');
+  const { Entry } = require('weapp-minipack');
   const path = require('path');
-  const pack = new MiniPack({ configPath: path.resolve(__dirname, '..', 'minipack.config.js') });
+  const pack = new Entry({ configPath: path.resolve(__dirname, '..', 'minipack.config.js') });
   pack.init().start();
 ```
 
