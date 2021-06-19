@@ -3,7 +3,8 @@ import { readFileSync, writeFileSync } from 'fs';
 import { minify } from 'html-minifier';
 import { resolve } from 'path';
 import { addEnv, changeMiniprogramConfig } from '../changeConfig';
-import { copyFile, readTsFile, startCompile } from '../controlFile/readFile';
+import { handleAssetsFile } from '../controlFile/handleAssetsFile';
+import { readTsFile, startCompile } from '../controlFile/readFile';
 import { filterObject } from '../utils/utils';
 
 /**
@@ -32,11 +33,10 @@ export function minifierHtml(filePath: string, endPath: string) {
   const result = minify(readFileSync(filePath, { encoding: 'utf-8' }), {
     minifyCSS: true,
     removeComments: true,
-    removeEmptyAttributes: true,
-    removeEmptyElements: true,
-    removeOptionalTags: true,
-    removeScriptTypeAttributes: true,
     collapseWhitespace: true,
+    keepClosingSlash: true,
+    trimCustomFragments: true,
+    caseSensitive: true,
   })
   
   writeFileSync(endPath, result, { encoding: 'utf-8' });
@@ -123,7 +123,7 @@ export async function actionCompile(
 
       // 写入修改的文件
       for(let assetFile of assetsFile) {
-          copyFile(resolve(rootPath, assetFile.filename), resolve(copyPath, assetFile.filename))
+          handleAssetsFile(resolve(rootPath, assetFile.filename), resolve(copyPath, assetFile.filename))
       }
   }
 }

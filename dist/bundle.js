@@ -4,10 +4,10 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var path = require('path');
 var fs = require('fs');
-var esbuild = require('esbuild');
-var htmlMinifier = require('html-minifier');
 require('readline');
 var crypto = require('crypto');
+var esbuild = require('esbuild');
+var htmlMinifier = require('html-minifier');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -32,6 +32,25 @@ const config = {
     },
     typeRoots: [],
 };
+
+/**
+ * 判断是否是文件夹
+ */
+function checkIsDir(filePath) {
+    return fs.statSync(filePath).isDirectory();
+}
+/**
+ * 判断两个文件大小是否相等
+ */
+function checkFileIsSame(pathA, pathB) {
+    const fileA_MD5 = crypto__default['default'].createHash('md5').update(fs.readFileSync(pathA)).digest('hex');
+    const fileB_MD5 = crypto__default['default'].createHash('md5').update(fs.readFileSync(pathB)).digest('hex');
+    return fileA_MD5 === fileB_MD5;
+}
+
+const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
+const TS_REG = /.*\.ts$/;
+const HTML_CSS_REG = /.*\.(wxss)$/;
 
 const PROJECT_CONFIG_PATH = path.resolve(__dirname, '../project.config.json');
 /**
@@ -109,11 +128,10 @@ function minifierHtml(filePath, endPath) {
     const result = htmlMinifier.minify(fs.readFileSync(filePath, { encoding: 'utf-8' }), {
         minifyCSS: true,
         removeComments: true,
-        removeEmptyAttributes: true,
-        removeEmptyElements: true,
-        removeOptionalTags: true,
-        removeScriptTypeAttributes: true,
         collapseWhitespace: true,
+        keepClosingSlash: true,
+        trimCustomFragments: true,
+        caseSensitive: true,
     });
     fs.writeFileSync(endPath, result, { encoding: 'utf-8' });
     return true;
@@ -183,29 +201,20 @@ async function actionCompile(fileArr, option) {
         }
         // 写入修改的文件
         for (let assetFile of assetsFile) {
-            copyFile(path.resolve(rootPath, assetFile.filename), path.resolve(copyPath, assetFile.filename));
+            handleAssetsFile(path.resolve(rootPath, assetFile.filename), path.resolve(copyPath, assetFile.filename));
         }
     }
 }
 
-/**
- * 判断是否是文件夹
- */
-function checkIsDir(filePath) {
-    return fs.statSync(filePath).isDirectory();
+function handleAssetsFile(tmpPath, endPath) {
+    if (HTML_CSS_REG.test(tmpPath)) {
+        minifierHtml(tmpPath, endPath);
+    }
+    else {
+        copyFile(tmpPath, endPath);
+    }
+    return true;
 }
-/**
- * 判断两个文件大小是否相等
- */
-function checkFileIsSame(pathA, pathB) {
-    const fileA_MD5 = crypto__default['default'].createHash('md5').update(fs.readFileSync(pathA)).digest('hex');
-    const fileB_MD5 = crypto__default['default'].createHash('md5').update(fs.readFileSync(pathB)).digest('hex');
-    return fileA_MD5 === fileB_MD5;
-}
-
-const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
-const TS_REG = /.*\.ts$/;
-const HTML_CSS_REG = /.*\.(wxml|wxss)$/;
 
 /**
  * 读取文件夹
@@ -254,12 +263,7 @@ async function startCompile(filePath, copyPath) {
                 continue;
             }
             else {
-                if (HTML_CSS_REG.test(tmpPath)) {
-                    minifierHtml(tmpPath, endPath);
-                }
-                else {
-                    copyFile(tmpPath, endPath);
-                }
+                handleAssetsFile(tmpPath, endPath);
             }
         }
     }
@@ -385,15 +389,13 @@ class Entry {
      * copy other asset files
      */
     copyFile() {
-        return new Promise(truly => {
+        return new Promise(async (truly) => {
             const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
             console.log('start copy asset files');
-            setTimeout(async () => {
-                await startCompile(watchEntry, outDir);
-                changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
-                console.log('copy assets success');
-                truly(true);
-            }, 1000);
+            await startCompile(watchEntry, outDir);
+            changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
+            console.log('copy assets success');
+            truly(true);
         });
     }
     /**

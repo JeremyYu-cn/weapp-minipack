@@ -1,72 +1,38 @@
 <!--index.wxml-->
-<view class="main">
-  <!-- 全屏广告 -->
-  <!-- <Mask wx:if="{{ isShowBanner && currentPage === 'recommend' }}">
-    <view bindtap="navToShop">
-      <Avatar src="index_banner.png" width="602rpx" height="812rpx" />
-    </view>
-    <view class="close_icon" bindtap="closeIndexBanner">
-      <MyIcon icon="cancel_ffffff.svg" width="62rpx" height="62rpx" />
-    </view>
-  </Mask> -->
-  <indexTemplate
+<view class="container">
+  <view class="choose_date">
+    <ChooseDate
+      isShowChooseDate="{{ isShowChooseDate }}"
+      bindcancel="cancelChooseDate"
+      bindsubmit="submitChooseDate"
+      searchDate="{{ searchDate }}"
+    />
+  </view>
+  <IndexTemplate
     currentPage="{{ currentPage }}"
-    bindchooseSelect="chooseSelect"
-    NavigatorHeader="{{ NavigatorHeader }}"
-    mobile="{{ mobile }}"
+    NavigatorHeader="{{ customHeaderData }}"
+    scrollViewStyle="{{ scrollViewStyle }}"
     tabList="{{ tabList }}"
-    scroll="{{ scroll }}"
-    isRefresh="{{ isRefresh }}"
-    refreshTrigger="{{ refreshTrigger }}"
-    bindscrollToRefresh="scrollRefresh"
+    bindchooseSelect="chooseSelect"
   >
-    <!-- 推荐 -->
-    <view hidden="{{ currentPage !== 'recommend' }}">
-      <!-- 通知 -->
-      <view class="notify">
-        <Notify
-          message="{{ notifyMessage }}"
-          isShow="{{ isShowNotify }}"
-          bindcancel="cancelNotify"
-        />
-      </view>
-      
-      <recommend
-        bannerList="{{ bannerList }}"
-        stadiumList="{{ stadiumList }}"
-        courseList="{{ courseList }}"
-        coachList="{{ coachList }}"
-        location="{{ location }}"
-        shopNavData="{{ navMiniprogramData.shop }}"
+    <!-- 工作 -->
+    <view hidden="{{ currentPage !== 'work' }}">
+      <Work currentPage="{{ currentPage }}" />
+    </view>
+
+    <!-- 数据 -->
+    <view wx:if="{{ currentPage === 'data' }}">
+      <Analysis
+        postData="{{ searchDate }}"
+        bindtapChooseDate="showChooseDate"
+        currentPage="{{ currentPage }}"
       />
     </view>
-      
-    <!-- 我的 -->
-    <view hidden="{{ currentPage !== 'my' }}">
-      <my
-        kidInfo="{{ kidInfo }}"
-        bindchangeuser="handleChangeUser"
-      />
+
+    <!-- 我的 mine -->
+    <view wx:if="{{ currentPage === 'mine' }}">
+      <My currentPage="{{ currentPage }}" />
     </view>
-      
-    <!-- 学员 -->
-    <!-- hidden是因为 里面有一个canvas2d wx:if会重复渲染，wx的获取cavnas实例会造成内存泄漏，导致闪退 -->
-    <view hidden="{{ currentPage !== 'learn' }}">
-      <student
-        userInfo="{{ studentInfo }}"
-        radarData="{{ studentRadarData }}"
-        refreshTrigger="{{ refreshTrigger }}"
-        bindrefreshData="scrollRefresh"
-      />
-    </view>
-      
-    <!-- 课程 -->
-    <view hidden="{{ currentPage !== 'lessons' }}">
-      <lesson id="lessonComponent" />
-    </view>
-  </indexTemplate>
-  <!-- 加载中 -->
-  <Loading wx:if="{{ isLoading }}" />
-  <!-- 导游页面 -->
-  <!-- <Guide wx:if="{{ isShowGuide }}" guideArr="{{ guideData }}" bindcomplishGuide="complishGuide" /> -->
+  </IndexTemplate>
 </view>
+

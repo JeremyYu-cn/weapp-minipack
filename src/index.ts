@@ -92,15 +92,13 @@ export class Entry {
    * copy other asset files
    */
   copyFile() {
-    return new Promise(truly => {
+    return new Promise(async truly => {
       const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
       console.log('start copy asset files');
-      setTimeout(async () => {
-        await startCompile(watchEntry, outDir);
-        changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
-        console.log('copy assets success');
-        truly(true);
-      },1000)
+      await startCompile(watchEntry, outDir);
+      changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
+      console.log('copy assets success');
+      truly(true);
     })
       
   }

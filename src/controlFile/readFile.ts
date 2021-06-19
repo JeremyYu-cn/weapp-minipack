@@ -6,6 +6,7 @@ import { resolve } from 'path';
 import { minifierHtml, } from '../compile/compile';
 import { checkFileIsSame, checkIsDir } from './checkFile';
 import { EXPLORE_REG, HTML_CSS_REG, TS_REG } from '../globalConfig';
+import { handleAssetsFile } from './handleAssetsFile';
 
 /**
  * 读取文件夹
@@ -76,11 +77,7 @@ export async function startCompile(filePath: string, copyPath: string) {
             if (existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
                 continue;
             } else {
-                if (HTML_CSS_REG.test(tmpPath)) {
-                    minifierHtml(tmpPath, endPath);
-                } else {
-                    copyFile(tmpPath, endPath);
-                }
+                handleAssetsFile(tmpPath, endPath);
             }
         }
     }
