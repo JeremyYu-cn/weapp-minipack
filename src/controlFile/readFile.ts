@@ -3,9 +3,8 @@ import {
     mkdirSync,
 } from 'fs';
 import { resolve } from 'path';
-import { minifierHtml, } from '../compile/compile';
 import { checkFileIsSame, checkIsDir } from './checkFile';
-import { EXPLORE_REG, HTML_CSS_REG, TS_REG } from '../globalConfig';
+import { EXPLORE_REG, TS_REG } from '../globalConfig';
 import { handleAssetsFile } from './handleAssetsFile';
 
 /**
@@ -62,9 +61,11 @@ function createDir(filePath: string) {
 }
 
 /**
- * 拷贝文件
+ * 开始编译
  */
-export async function startCompile(filePath: string, copyPath: string) {
+export async function startCompile(
+    filePath: string, copyPath: string, plugins: PluginFunction[] = []
+) {
     // 读取所有文件
     const fileArr = readDir(filePath);
     for (let x of fileArr) {
@@ -72,12 +73,12 @@ export async function startCompile(filePath: string, copyPath: string) {
         let endPath = resolve(copyPath, x);
         if (checkIsDir(tmpPath)) {
             createDir(endPath);
-            startCompile(tmpPath, endPath);
+            startCompile(tmpPath, endPath, plugins);
         } else if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
             if (existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
                 continue;
             } else {
-                handleAssetsFile(tmpPath, endPath);
+                handleAssetsFile(tmpPath, endPath, plugins);
             }
         }
     }

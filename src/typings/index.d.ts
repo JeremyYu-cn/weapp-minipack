@@ -1,3 +1,7 @@
+type PluginFunction = {
+    test: RegExp,
+    action: (data: IPluginOption) => string
+}
 
 declare module miniPack {
     interface IConfigOption {
@@ -53,6 +57,17 @@ declare module miniPack {
          */
         typeRoots: string[]
         
+        /**
+         * plugins
+         */
+        plugins?: PluginFunction[]
+    }
+
+    interface IPluginOption {
+        copyDir: string
+        filePath: string
+        data: string
+        dataBuf: buffer
     }
 
     interface InpouringEnvOtion {
@@ -104,6 +119,10 @@ declare module miniPack {
          * miniprogram project config path
          */
         miniprogramProjectPath: string
+        /**
+         * assets file handle plugins 
+         */
+        plugins?: PluginFunction[]
     }
 
     interface ITsFileData {

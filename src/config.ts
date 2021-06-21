@@ -17,6 +17,7 @@ const config: miniPack.IConfigOption = {
         data: '',
     },
     typeRoots: [],
+    plugins: [],
 }
 
 export default config;

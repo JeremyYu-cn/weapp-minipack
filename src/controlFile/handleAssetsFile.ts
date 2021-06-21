@@ -1,10 +1,26 @@
-import { minifierHtml } from "../compile/compile";
-import { HTML_CSS_REG } from "../globalConfig";
+import { readFileSync, writeFileSync } from "fs";
 import { copyFile } from "./readFile";
 
-export function handleAssetsFile(tmpPath: string, endPath: string): boolean{
-  if (HTML_CSS_REG.test(tmpPath)) {
-    minifierHtml(tmpPath, endPath);
+export function handleAssetsFile(tmpPath: string, endPath: string, plugins: PluginFunction[])
+: boolean
+{
+  let formatData = '';
+  for(let x of plugins) {
+    if(x.test.test(tmpPath)) {
+      const data = readFileSync(tmpPath, { encoding: 'utf-8' });
+      const actionData: miniPack.IPluginOption = {
+        copyDir: endPath,
+        filePath: tmpPath,
+        data,
+        dataBuf: Buffer.alloc(data.length, data),
+      }
+      formatData = x.action(actionData)
+      break;
+    } 
+  }
+
+  if (formatData) {
+    writeFileSync(endPath, formatData);
   } else {
     copyFile(tmpPath, endPath);
   }

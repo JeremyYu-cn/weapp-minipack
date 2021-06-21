@@ -5,8 +5,11 @@ import DEFAULT_CONFIG from './config';
 
 import { readTsFile, startCompile } from './controlFile/readFile';
 import { addEnv, changeMiniprogramConfig, } from './changeConfig';
-import { translateCode } from './compile/compile';
-import { watchFile } from './controlFile/watchFile';
+import { translateCode, } from './compile/compile';
+import { watchFile, } from './controlFile/watchFile';
+import { minifierStyle, } from './minify/minifyWxss';
+import { minifyerWxml, } from './minify/minifyWxml';
+
 export class Entry {
   private DEFAULT_MINIPACK_CONFIG_PATH: string;
   private program: null | commander.Command;
@@ -93,9 +96,12 @@ export class Entry {
    */
   copyFile() {
     return new Promise(async truly => {
-      const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
+      const {
+        watchEntry, outDir, miniprogramProjectConfig,
+        miniprogramProjectPath, plugins,
+      } = this.config;
       console.log('start copy asset files');
-      await startCompile(watchEntry, outDir);
+      await startCompile(watchEntry, outDir, plugins);
       changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
       console.log('copy assets success');
       truly(true);
@@ -110,7 +116,7 @@ export class Entry {
     const {
       isWatch, watchEntry, outDir, tsConfigPath,
       miniprogramProjectConfig, miniprogramProjectPath,
-      inpouringEnv, typeRoots,
+      inpouringEnv, typeRoots, plugins,
     } = this.config;
     
     if (isWatch) {
@@ -122,12 +128,15 @@ export class Entry {
         miniprogramProjectPath,
         miniprogramProjectConfig,
         typingDirPath: typeRoots,
+        plugins,
       }
       watchFile(watchOption);
     }
   }
 }
 
+export const minifyStyle = minifierStyle;
+export const minifyWxml = minifyerWxml;
 
 
 

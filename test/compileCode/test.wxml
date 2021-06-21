@@ -1,38 +1,83 @@
-<!--index.wxml-->
-<view class="container">
-  <view class="choose_date">
+<!-- 通用数据详情展示 -->
+<view class="analysis_detail">
+  <view class="background">
+    <Avatar src="coach_data_detail_bg.png" width="100vw" height="34vh" />
+  </view>
+  <view class="detail_box">
+    <IndexTemplate
+      NavigatorHeader="{{ customHeaderData }}"
+      scrollViewStyle="{{ scrollViewStyle }}"
+      bindreturnEvent="returnBack"
+      hideTabbar
+    >
+      <view class="container">
+        <view class="header">
+          <!-- 统计总量 -->
+          <view class="total">
+            <view class="total_value">{{ totalNum }}</view>
+            <view class="total_label">{{ totalLabel }}</view>
+          </view>
+          <!-- 时间选择器 -->
+          <view
+            class="time_picker"
+            bindtap="showDatePicker"
+            wx:if="{{ searchType === 'date' }}"
+          >
+            <view class="picker_text">{{ startTime.time + ' ' + startTime.week }} 至 {{ endTime.time + ' ' + endTime.week }}</view>
+            <view class="picker_icon">
+              <MyIcon icon="arrow_right_000.svg" width="25rpx" height="25rpx" rotate="-90deg" />
+            </view>
+          </view>
+          <!-- 其他搜索 -->
+          <view
+            class="multiple_search"
+            wx:else
+          >
+            <MultipleSearch
+              inputStyle="background: none;"
+              placeholder="请输入学员姓名或手机号码"
+              multipleIcon="coach_multiple_f1f1f1.svg"
+              multipleStyle="color: #f1f1f1"
+              bindtapMultiple="showSearchSheet"
+            />
+          </view>
+        </view>
+        <scroll-view scroll-y class="content">
+          <view class="detail_list">
+            <view class="detail_column" wx:for="{{ list }}" wx:key="id">
+              <Card
+                title="{{ item.createTime }}"
+                titleTextStyle="font-size: 26rpx; color: #5D6A82; font-weight: normal;"
+                titleStyle="margin: 0 30rpx; border-bottom: 2rpx solid #EEEEEE; padding: 30rpx 0;"
+                cardStyle="width:90vw; margin: 0 5vw; border-radius: 6rpx; background: #fff;"
+                moreText=""
+                textNostyle
+                moreArrow
+              >
+                <DetailList
+                  data="{{ item }}"
+                  column="{{ column }}"
+                />
+              </Card>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </IndexTemplate>
+  </view>
+  <!-- 时间选择器 -->
+  <view class="time_picker_box">
     <ChooseDate
       isShowChooseDate="{{ isShowChooseDate }}"
-      bindcancel="cancelChooseDate"
-      bindsubmit="submitChooseDate"
-      searchDate="{{ searchDate }}"
+      bindcancel="hideDatePicker"
     />
   </view>
-  <IndexTemplate
-    currentPage="{{ currentPage }}"
-    NavigatorHeader="{{ customHeaderData }}"
-    scrollViewStyle="{{ scrollViewStyle }}"
-    tabList="{{ tabList }}"
-    bindchooseSelect="chooseSelect"
-  >
-    <!-- 工作 -->
-    <view hidden="{{ currentPage !== 'work' }}">
-      <Work currentPage="{{ currentPage }}" />
-    </view>
-
-    <!-- 数据 -->
-    <view wx:if="{{ currentPage === 'data' }}">
-      <Analysis
-        postData="{{ searchDate }}"
-        bindtapChooseDate="showChooseDate"
-        currentPage="{{ currentPage }}"
-      />
-    </view>
-
-    <!-- 我的 mine -->
-    <view wx:if="{{ currentPage === 'mine' }}">
-      <My currentPage="{{ currentPage }}" />
-    </view>
-  </IndexTemplate>
+  <!-- 搜索多选 -->
+  <view class="search_sheet">
+    <MultipleSearchSheet
+      isShow="{{ isShowSearchSheet }}"
+      bindtapMask="hideSearchSheet"
+      bindsubmit="handleMultipleSubmit"
+    />
+  </view>
 </view>
-

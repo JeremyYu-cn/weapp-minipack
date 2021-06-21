@@ -1,6 +1,4 @@
 import esbuild, { build } from 'esbuild';
-import { readFileSync, writeFileSync } from 'fs';
-import { minify } from 'html-minifier';
 import { resolve } from 'path';
 import { addEnv, changeMiniprogramConfig } from '../changeConfig';
 import { handleAssetsFile } from '../controlFile/handleAssetsFile';
@@ -20,27 +18,6 @@ export async function translateCode(options: esbuild.BuildOptions) {
     console.log('build err', err);
     return false;
   }
-  
-}
-
-/**
- * 压缩HTML CSS文件
- * @param filePath 
- * @param endPath 
- * @returns 
- */
-export function minifierHtml(filePath: string, endPath: string) {
-  const result = minify(readFileSync(filePath, { encoding: 'utf-8' }), {
-    minifyCSS: true,
-    removeComments: true,
-    collapseWhitespace: true,
-    keepClosingSlash: true,
-    trimCustomFragments: true,
-    caseSensitive: true,
-  })
-  
-  writeFileSync(endPath, result, { encoding: 'utf-8' });
-  return true;
 }
 
 /**
@@ -85,6 +62,7 @@ export async function actionCompile(
   const {
       rootPath, inpourEnv,
       miniprogramProjectConfig, miniprogramProjectPath,
+      plugins = [],
   } = option;
   let { copyPath } = option;
 
@@ -99,7 +77,6 @@ export async function actionCompile(
   
   // 有文件新增或删除为重新编译
   if (isReadName) {
-      // const compileResult = childProcess.spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath], { shell: true });
       const fileList = readTsFile(rootPath)
       const compileResult = await translateCode({
         format: 'cjs',
@@ -123,7 +100,11 @@ export async function actionCompile(
 
       // 写入修改的文件
       for(let assetFile of assetsFile) {
-          handleAssetsFile(resolve(rootPath, assetFile.filename), resolve(copyPath, assetFile.filename))
+          handleAssetsFile(
+            resolve(rootPath, assetFile.filename),
+            resolve(copyPath, assetFile.filename),
+            plugins,
+          )
       }
   }
 }

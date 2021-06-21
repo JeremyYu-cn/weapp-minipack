@@ -31,6 +31,7 @@ const config = {
         data: '',
     },
     typeRoots: [],
+    plugins: [],
 };
 
 /**
@@ -50,7 +51,103 @@ function checkFileIsSame(pathA, pathB) {
 
 const EXPLORE_REG = new RegExp(".*.(js|ts)$|.DS_Store");
 const TS_REG = /.*\.ts$/;
-const HTML_CSS_REG = /.*\.(wxss)$/;
+
+function handleAssetsFile(tmpPath, endPath, plugins) {
+    let formatData = '';
+    for (let x of plugins) {
+        if (x.test.test(tmpPath)) {
+            const data = fs.readFileSync(tmpPath, { encoding: 'utf-8' });
+            const actionData = {
+                copyDir: endPath,
+                filePath: tmpPath,
+                data,
+                dataBuf: Buffer.alloc(data.length, data),
+            };
+            formatData = x.action(actionData);
+            break;
+        }
+    }
+    if (formatData) {
+        fs.writeFileSync(endPath, formatData);
+    }
+    else {
+        copyFile(tmpPath, endPath);
+    }
+    return true;
+}
+
+/**
+ * 读取文件夹
+ */
+function readDir(filePath) {
+    if (checkIsDir(filePath)) {
+        return fs.readdirSync(filePath);
+    }
+    else {
+        return [];
+    }
+}
+/**
+ * 用流的方式复制文件
+ */
+function copyFile(beginPath, endPath) {
+    if (fs.existsSync(beginPath) && !checkIsDir(beginPath)) {
+        const readStream = fs.createReadStream(beginPath);
+        const writeStream = fs.createWriteStream(endPath);
+        readStream.pipe(writeStream);
+    }
+}
+/**
+ * 创建文件夹
+ */
+function createDir(filePath) {
+    if (!fs.existsSync(filePath)) {
+        fs.mkdirSync(filePath);
+    }
+}
+/**
+ * 开始编译
+ */
+async function startCompile(filePath, copyPath, plugins = []) {
+    // 读取所有文件
+    const fileArr = readDir(filePath);
+    for (let x of fileArr) {
+        const tmpPath = path.resolve(path.resolve(filePath, x));
+        let endPath = path.resolve(copyPath, x);
+        if (checkIsDir(tmpPath)) {
+            createDir(endPath);
+            startCompile(tmpPath, endPath, plugins);
+        }
+        else if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
+            if (fs.existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
+                continue;
+            }
+            else {
+                handleAssetsFile(tmpPath, endPath, plugins);
+            }
+        }
+    }
+}
+/**
+ * 读取所有ts文件
+ */
+function readTsFile(filePath, currentPath = '') {
+    const fileArr = readDir(filePath);
+    let resultArr = [];
+    for (let x of fileArr) {
+        const tmpPath = path.resolve(filePath, x);
+        const keyPath = `${currentPath}/${x}`;
+        if (checkIsDir(tmpPath)) {
+            resultArr = resultArr.concat(readTsFile(tmpPath, keyPath));
+        }
+        else {
+            if (TS_REG.test(keyPath)) {
+                resultArr.push(tmpPath);
+            }
+        }
+    }
+    return resultArr;
+}
 
 const PROJECT_CONFIG_PATH = path.resolve(__dirname, '../project.config.json');
 /**
@@ -119,24 +216,6 @@ async function translateCode(options) {
     }
 }
 /**
- * 压缩HTML CSS文件
- * @param filePath
- * @param endPath
- * @returns
- */
-function minifierHtml(filePath, endPath) {
-    const result = htmlMinifier.minify(fs.readFileSync(filePath, { encoding: 'utf-8' }), {
-        minifyCSS: true,
-        removeComments: true,
-        collapseWhitespace: true,
-        keepClosingSlash: true,
-        trimCustomFragments: true,
-        caseSensitive: true,
-    });
-    fs.writeFileSync(endPath, result, { encoding: 'utf-8' });
-    return true;
-}
-/**
  * 编译TS文件
  */
 async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv) {
@@ -165,7 +244,7 @@ async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv) {
  * 监听文件开始编译
  */
 async function actionCompile(fileArr, option) {
-    const { rootPath, inpourEnv, miniprogramProjectConfig, miniprogramProjectPath, } = option;
+    const { rootPath, inpourEnv, miniprogramProjectConfig, miniprogramProjectPath, plugins = [], } = option;
     let { copyPath } = option;
     // 对象去重
     fileArr = filterObject(fileArr);
@@ -177,7 +256,6 @@ async function actionCompile(fileArr, option) {
     const tsFile = fileArr.filter(val => val.type === 'ts');
     // 有文件新增或删除为重新编译
     if (isReadName) {
-        // const compileResult = childProcess.spawnSync('tsc', ['--project', tsconfigPath, '--outDir', copyPath], { shell: true });
         const fileList = readTsFile(rootPath);
         const compileResult = await translateCode({
             format: 'cjs',
@@ -201,92 +279,9 @@ async function actionCompile(fileArr, option) {
         }
         // 写入修改的文件
         for (let assetFile of assetsFile) {
-            handleAssetsFile(path.resolve(rootPath, assetFile.filename), path.resolve(copyPath, assetFile.filename));
+            handleAssetsFile(path.resolve(rootPath, assetFile.filename), path.resolve(copyPath, assetFile.filename), plugins);
         }
     }
-}
-
-function handleAssetsFile(tmpPath, endPath) {
-    if (HTML_CSS_REG.test(tmpPath)) {
-        minifierHtml(tmpPath, endPath);
-    }
-    else {
-        copyFile(tmpPath, endPath);
-    }
-    return true;
-}
-
-/**
- * 读取文件夹
- */
-function readDir(filePath) {
-    if (checkIsDir(filePath)) {
-        return fs.readdirSync(filePath);
-    }
-    else {
-        return [];
-    }
-}
-/**
- * 用流的方式复制文件
- */
-function copyFile(beginPath, endPath) {
-    if (fs.existsSync(beginPath) && !checkIsDir(beginPath)) {
-        const readStream = fs.createReadStream(beginPath);
-        const writeStream = fs.createWriteStream(endPath);
-        readStream.pipe(writeStream);
-    }
-}
-/**
- * 创建文件夹
- */
-function createDir(filePath) {
-    if (!fs.existsSync(filePath)) {
-        fs.mkdirSync(filePath);
-    }
-}
-/**
- * 拷贝文件
- */
-async function startCompile(filePath, copyPath) {
-    // 读取所有文件
-    const fileArr = readDir(filePath);
-    for (let x of fileArr) {
-        const tmpPath = path.resolve(path.resolve(filePath, x));
-        let endPath = path.resolve(copyPath, x);
-        if (checkIsDir(tmpPath)) {
-            createDir(endPath);
-            startCompile(tmpPath, endPath);
-        }
-        else if (!EXPLORE_REG.test(endPath) || /\/lib\/.*|\lib\.*/g.test(endPath)) {
-            if (fs.existsSync(endPath) && checkFileIsSame(tmpPath, endPath)) {
-                continue;
-            }
-            else {
-                handleAssetsFile(tmpPath, endPath);
-            }
-        }
-    }
-}
-/**
- * 读取所有ts文件
- */
-function readTsFile(filePath, currentPath = '') {
-    const fileArr = readDir(filePath);
-    let resultArr = [];
-    for (let x of fileArr) {
-        const tmpPath = path.resolve(filePath, x);
-        const keyPath = `${currentPath}/${x}`;
-        if (checkIsDir(tmpPath)) {
-            resultArr = resultArr.concat(readTsFile(tmpPath, keyPath));
-        }
-        else {
-            if (TS_REG.test(keyPath)) {
-                resultArr.push(tmpPath);
-            }
-        }
-    }
-    return resultArr;
 }
 
 /**
@@ -309,6 +304,27 @@ function watchFile(option, during = 500) {
             changeFileArr = [];
         }, during);
     });
+}
+
+/**
+ * 压缩HTML CSS文件
+ * @param filePath
+ * @param endPath
+ * @returns
+ */
+function minifierStyle({ data, }) {
+    return htmlMinifier.minify(data, {
+        minifyCSS: true,
+        removeComments: true,
+        collapseWhitespace: true,
+        keepClosingSlash: true,
+        trimCustomFragments: true,
+        caseSensitive: true,
+    });
+}
+
+function minifyerWxml({ data, }) {
+    return data.replace(/\n|\s{2,}/g, ' ').replace(/\/\/.*|<!--.*-->/g, '');
 }
 
 class Entry {
@@ -390,9 +406,9 @@ class Entry {
      */
     copyFile() {
         return new Promise(async (truly) => {
-            const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath } = this.config;
+            const { watchEntry, outDir, miniprogramProjectConfig, miniprogramProjectPath, plugins, } = this.config;
             console.log('start copy asset files');
-            await startCompile(watchEntry, outDir);
+            await startCompile(watchEntry, outDir, plugins);
             changeMiniprogramConfig(miniprogramProjectConfig, miniprogramProjectPath);
             console.log('copy assets success');
             truly(true);
@@ -402,7 +418,7 @@ class Entry {
      * watchFile
      */
     watchFile() {
-        const { isWatch, watchEntry, outDir, tsConfigPath, miniprogramProjectConfig, miniprogramProjectPath, inpouringEnv, typeRoots, } = this.config;
+        const { isWatch, watchEntry, outDir, tsConfigPath, miniprogramProjectConfig, miniprogramProjectPath, inpouringEnv, typeRoots, plugins, } = this.config;
         if (isWatch) {
             const watchOption = {
                 rootPath: watchEntry,
@@ -412,10 +428,15 @@ class Entry {
                 miniprogramProjectPath,
                 miniprogramProjectConfig,
                 typingDirPath: typeRoots,
+                plugins,
             };
             watchFile(watchOption);
         }
     }
 }
+const minifyStyle = minifierStyle;
+const minifyWxml = minifyerWxml;
 
 exports.Entry = Entry;
+exports.minifyStyle = minifyStyle;
+exports.minifyWxml = minifyWxml;

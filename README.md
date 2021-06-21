@@ -44,7 +44,9 @@
 * inpouringEnv.isInpour **boolean 是否注入
 * inpouringEnv.files **array string** 需要注入的文件路径
 * inpouringEnv.data **string** 需要注入的信息
+* plugins 处理其他文件的插件
 
+## plugins
 
 ## 使用(调用实例方法)
 
