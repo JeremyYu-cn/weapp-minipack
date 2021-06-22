@@ -9,7 +9,6 @@
 
 >  yarn global add weapp-minipack
 
-
 ## 使用(cli)
 
 >  weapp-minipack -c ./minipack.config.js
@@ -47,6 +46,38 @@
 * plugins 处理其他文件的插件
 
 ## plugins
+你可以使用其他插件去处理不同的文件，例如wxml，wxss代码压缩等，
+plugins接受一个对象数组
+```javascript
+  plugins: [
+    {
+      test: /.*\.wxml$/,
+      action: ({ data, dataBuf, filePath, copyPath }) => {
+        //handle function
+        ....
+      }
+    }
+  ]
+```
+* test: 匹配文件的正则表达式
+* action: 处理匹配到的文件函数
+action函数会传入一个`IPluginOption`类型的对象
+* IPluginOption.data string 对应文件的字符串表示
+* IPluginOption.dataBuf Buffer 对应文件的buffer
+* IPluginOption.filePath string 对应文件的路径
+* IPluginOption.copyPath string 编译的目标路径
+
+在minipack中还内置了wxss压缩插件
+```javascript
+  const { minifierStyle } = require('weapp_minipack');
+  // minipack.config.js
+  plugins: [
+      {
+          test: /.*\.(wxss)$/,
+          action: minifierStyle,
+      }
+  ]
+```
 
 ## 使用(调用实例方法)
 
