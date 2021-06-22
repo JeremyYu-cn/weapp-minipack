@@ -61,7 +61,8 @@ plugins接受一个对象数组
 ```
 * test: 匹配文件的正则表达式
 * action: 处理匹配到的文件函数
-action函数会传入一个`IPluginOption`类型的对象
+action函数会传入一个`IPluginOption`类型的对象   
+
 * IPluginOption.data string 对应文件的字符串表示
 * IPluginOption.dataBuf Buffer 对应文件的buffer
 * IPluginOption.filePath string 对应文件的路径
