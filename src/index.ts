@@ -1,6 +1,5 @@
 import { resolve } from 'path';
 import { statSync, existsSync, } from 'fs';
-import type commander from 'commander';
 import DEFAULT_CONFIG from './config';
 
 import { readTsFile, startCompile } from './controlFile/readFile';
@@ -9,11 +8,13 @@ import { translateCode, } from './compile/compile';
 import { watchFile, } from './controlFile/watchFile';
 import { minifierStyle, } from './minify/minifyWxss';
 import { minifyerWxml, } from './minify/minifyWxml';
+import { miniPackConfigOption } from './typings/config';
+import commander from '../node_modules/commander/typings/index';
 
 export class Entry {
   private DEFAULT_MINIPACK_CONFIG_PATH: string;
   private program: null | commander.Command;
-  private config: miniPack.IConfigOption
+  private config: miniPackConfigOption
   constructor(data: {configPath?: string, command?: commander.Command}) {
     const { configPath, command } = data;
     this.program = command || null;
@@ -64,7 +65,7 @@ export class Entry {
    */
   async start() {
     const {
-      watchEntry, outDir, inpouringEnv
+      watchEntry, outDir, inpouringEnv, esBuildOptions,
     } = this.config;
     
     console.log('compile start');
@@ -74,6 +75,7 @@ export class Entry {
       entryPoints: fileList,
       minify: true,
       outdir: outDir,
+      ...esBuildOptions,
     })
     // const result = childProcess.spawnSync(`tsc`,[`--project`, tsConfigPath, '--outDir', outDir,], { shell: true, });
     if (compileResult) {
@@ -116,7 +118,7 @@ export class Entry {
     const {
       isWatch, watchEntry, outDir, tsConfigPath,
       miniprogramProjectConfig, miniprogramProjectPath,
-      inpouringEnv, typeRoots, plugins,
+      inpouringEnv, typeRoots, plugins, esBuildOptions = {},
     } = this.config;
     
     if (isWatch) {
@@ -129,6 +131,7 @@ export class Entry {
         miniprogramProjectConfig,
         typingDirPath: typeRoots,
         plugins,
+        esBuildOptions,
       }
       watchFile(watchOption);
     }
@@ -137,6 +140,4 @@ export class Entry {
 
 export const minifyStyle = minifierStyle;
 export const minifyWxml = minifyerWxml;
-
-
-
+export type { miniPackConfigOption } from './typings/config';

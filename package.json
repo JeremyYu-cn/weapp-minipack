@@ -1,6 +1,6 @@
 {
   "name": "weapp-minipack",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "description": "a bundler for wechat miniprogram",
   "main": "./dist/bundle.js",
   "bin": {
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.14.4",
     "@babel/preset-typescript": "^7.13.0",
+    "@rollup/plugin-typescript": "^8.2.1",
     "@types/commander": "^2.12.2",
     "@types/node": "^14.14.14",
     "cross-env": "^7.0.3",

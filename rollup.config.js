@@ -5,8 +5,11 @@ const commonjs = require('rollup-plugin-commonjs');
 const env = process.env.NODE_ENV;
 
 const isCommander = /commander/g.test(env);
-
-module.exports = {
+const tsConfigPath = path.resolve(__dirname, "tsconfig.json")
+/**
+ * @type import("rollup").RollupOptions
+ */
+const config = {
   input: path.resolve(__dirname, isCommander ? 'src/command.ts' : 'src/index.ts'),
   output: {
     file: path.resolve(__dirname, 'dist', isCommander ? 'bundle_command.js' : 'bundle.js'),
@@ -21,6 +24,10 @@ module.exports = {
   plugins: [
     resolve(),
     commonjs(),
-    rollupTypescript(),
+    rollupTypescript({
+      tsconfig: tsConfigPath,
+    }),
   ]
 }
+
+module.exports = config

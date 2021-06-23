@@ -28,6 +28,7 @@ export async function actionCompileTsFile(
   rootPath: string,
   copyPath: string,
   inpourEnv: miniPack.InpouringEnvOtion,
+  esBuildOptions: esbuild.BuildOptions,
 ) {
   console.log('正在编译指定文件');
   console.time('compile');
@@ -42,6 +43,7 @@ export async function actionCompileTsFile(
           entryPoints: [ sourchFile ],
           minify: true,
           outdir: compilePath,
+          ...esBuildOptions,
       })
       console.log(result);
       if (inpourEnv.isInpour) {
@@ -62,9 +64,9 @@ export async function actionCompile(
   const {
       rootPath, inpourEnv,
       miniprogramProjectConfig, miniprogramProjectPath,
-      plugins = [],
+      plugins = [], esBuildOptions,
   } = option;
-  let { copyPath } = option;
+  let { copyPath, } = option;
 
   // 对象去重
   fileArr = filterObject(fileArr);
@@ -83,6 +85,7 @@ export async function actionCompile(
         entryPoints: fileList,
         minify: true,
         outdir: copyPath,
+        ...esBuildOptions,
       })
       if (compileResult) {
           if (inpourEnv.isInpour) {
@@ -95,7 +98,7 @@ export async function actionCompile(
   } else {
       // 写入ts文件
       if (tsFile.length) {
-          await actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv);
+          await actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv, esBuildOptions);
       }
 
       // 写入修改的文件

@@ -44,6 +44,7 @@
 * inpouringEnv.files **array string** 需要注入的文件路径
 * inpouringEnv.data **string** 需要注入的信息
 * plugins 处理其他文件的插件
+* esBuildOptions 参考[esbuild](https://esbuild.github.io/api/)
 
 ## plugins
 你可以使用其他插件去处理不同的文件，例如wxml，wxss代码压缩等，

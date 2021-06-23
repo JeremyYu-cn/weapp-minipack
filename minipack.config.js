@@ -28,6 +28,9 @@ module.exports = {
         path.resolve(__dirname, './typings'),
         path.resolve(__dirname, 'node_modules/@types/node')
     ],
+    esBuildOptions: {
+      sourcemap: true,
+    },
     plugins: [
         {
             test: /.*\.(wxml)$/,

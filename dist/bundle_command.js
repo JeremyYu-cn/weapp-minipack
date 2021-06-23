@@ -60,7 +60,7 @@ const TS_REG = /.*\.ts$/;
 function handleAssetsFile(tmpPath, endPath, plugins) {
     let formatData = '';
     for (let x of plugins) {
-        if (x.test.test(tmpPath)) {
+        if (x.test.test(tmpPath) && fs.existsSync(tmpPath)) {
             const data = fs.readFileSync(tmpPath, { encoding: 'utf-8' });
             const actionData = {
                 copyDir: endPath,
@@ -223,7 +223,7 @@ async function translateCode(options) {
 /**
  * 编译TS文件
  */
-async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv) {
+async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv, esBuildOptions) {
     console.log('正在编译指定文件');
     console.time('compile');
     for (let compileFile of tsFile) {
@@ -236,6 +236,7 @@ async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv) {
             entryPoints: [sourchFile],
             minify: true,
             outdir: compilePath,
+            ...esBuildOptions,
         });
         console.log(result);
         if (inpourEnv.isInpour) {
@@ -249,8 +250,8 @@ async function actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv) {
  * 监听文件开始编译
  */
 async function actionCompile(fileArr, option) {
-    const { rootPath, inpourEnv, miniprogramProjectConfig, miniprogramProjectPath, plugins = [], } = option;
-    let { copyPath } = option;
+    const { rootPath, inpourEnv, miniprogramProjectConfig, miniprogramProjectPath, plugins = [], esBuildOptions, } = option;
+    let { copyPath, } = option;
     // 对象去重
     fileArr = filterObject(fileArr);
     // 判断是否有文件新增或删除
@@ -267,6 +268,7 @@ async function actionCompile(fileArr, option) {
             entryPoints: fileList,
             minify: true,
             outdir: copyPath,
+            ...esBuildOptions,
         });
         if (compileResult) {
             if (inpourEnv.isInpour) {
@@ -280,7 +282,7 @@ async function actionCompile(fileArr, option) {
     else {
         // 写入ts文件
         if (tsFile.length) {
-            await actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv);
+            await actionCompileTsFile(tsFile, rootPath, copyPath, inpourEnv, esBuildOptions);
         }
         // 写入修改的文件
         for (let assetFile of assetsFile) {
@@ -361,7 +363,7 @@ class Entry {
      * start build
      */
     async start() {
-        const { watchEntry, outDir, inpouringEnv } = this.config;
+        const { watchEntry, outDir, inpouringEnv, esBuildOptions, } = this.config;
         console.log('compile start');
         const fileList = readTsFile(watchEntry);
         const compileResult = await translateCode({
@@ -369,6 +371,7 @@ class Entry {
             entryPoints: fileList,
             minify: true,
             outdir: outDir,
+            ...esBuildOptions,
         });
         // const result = childProcess.spawnSync(`tsc`,[`--project`, tsConfigPath, '--outDir', outDir,], { shell: true, });
         if (compileResult) {
@@ -402,7 +405,7 @@ class Entry {
      * watchFile
      */
     watchFile() {
-        const { isWatch, watchEntry, outDir, tsConfigPath, miniprogramProjectConfig, miniprogramProjectPath, inpouringEnv, typeRoots, plugins, } = this.config;
+        const { isWatch, watchEntry, outDir, tsConfigPath, miniprogramProjectConfig, miniprogramProjectPath, inpouringEnv, typeRoots, plugins, esBuildOptions = {}, } = this.config;
         if (isWatch) {
             const watchOption = {
                 rootPath: watchEntry,
@@ -413,6 +416,7 @@ class Entry {
                 miniprogramProjectConfig,
                 typingDirPath: typeRoots,
                 plugins,
+                esBuildOptions,
             };
             watchFile(watchOption);
         }
