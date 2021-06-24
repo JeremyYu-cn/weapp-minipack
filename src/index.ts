@@ -9,7 +9,7 @@ import { watchFile, } from './controlFile/watchFile';
 import { minifierStyle, } from './minify/minifyWxss';
 import { minifyerWxml, } from './minify/minifyWxml';
 import { miniPackConfigOption } from './typings/config';
-import commander from '../node_modules/commander/typings/index';
+import commander from 'commander';
 
 export class Entry {
   private DEFAULT_MINIPACK_CONFIG_PATH: string;
@@ -37,11 +37,12 @@ export class Entry {
     let file = this.DEFAULT_MINIPACK_CONFIG_PATH;
     if (this.program) {
       // get config file
-      if (!this.program.config) {
-        this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
+      const options = this.program.opts();
+      if (!options.config) {
+        options.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
       } else {
-        const isFullPath = /^\/.*/.test(this.program.config);
-        file = isFullPath ? this.program.config : resolve(process.cwd(), this.program.config);
+        const isFullPath = /^\/.*/.test(options.config);
+        file = isFullPath ? options.config : resolve(process.cwd(), options.config);
       }
     }
     
@@ -140,4 +141,3 @@ export class Entry {
 
 export const minifyStyle = minifierStyle;
 export const minifyWxml = minifyerWxml;
-export type { miniPackConfigOption } from './typings/config';

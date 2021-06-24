@@ -350,12 +350,13 @@ class Entry {
         let file = this.DEFAULT_MINIPACK_CONFIG_PATH;
         if (this.program) {
             // get config file
-            if (!this.program.config) {
-                this.program.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
+            const options = this.program.opts();
+            if (!options.config) {
+                options.config = this.DEFAULT_MINIPACK_CONFIG_PATH;
             }
             else {
-                const isFullPath = /^\/.*/.test(this.program.config);
-                file = isFullPath ? this.program.config : path.resolve(process.cwd(), this.program.config);
+                const isFullPath = /^\/.*/.test(options.config);
+                file = isFullPath ? options.config : path.resolve(process.cwd(), options.config);
             }
         }
         if (fs.existsSync(file) && fs.statSync(file).isFile()) {
