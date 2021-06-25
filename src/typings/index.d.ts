@@ -4,29 +4,12 @@ type PluginFunction = {
 }
 
 declare module miniPack {
-    
 
     interface IPluginOption {
         copyDir: string
         filePath: string
         data: string
         dataBuf: buffer
-    }
-
-    interface InpouringEnvOtion {
-        /**
-         * control inpour env data or not
-         */
-        isInpour: boolean
-        /**
-         * inpour files
-         */
-        files: string[]
-
-        /**
-         * inpour data
-         */
-        data: string
     }
 
     interface IWatchFileOption {

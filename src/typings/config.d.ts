@@ -1,3 +1,26 @@
+import type esbuild from 'esbuild';
+
+type PluginFunction = {
+    test: RegExp,
+    action: (data: IPluginOption) => string
+}
+
+export interface InpouringEnvOtion {
+    /**
+     * control inpour env data or not
+     */
+    isInpour: boolean
+    /**
+     * inpour files
+     */
+    files: string[]
+
+    /**
+     * inpour data
+     */
+    data: string
+}
+
 export interface miniPackConfigOption {
   /**
    * current bundler env

@@ -6,6 +6,7 @@ import { resolve } from 'path';
 import { checkFileIsSame, checkIsDir } from './checkFile';
 import { EXPLORE_REG, TS_REG } from '../globalConfig';
 import { handleAssetsFile } from './handleAssetsFile';
+import type { PluginFunction } from '../typings/config';
 
 /**
  * 读取文件夹

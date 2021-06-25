@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { addEnv, changeMiniprogramConfig } from '../changeConfig';
 import { handleAssetsFile } from '../controlFile/handleAssetsFile';
 import { readTsFile, startCompile } from '../controlFile/readFile';
+import { InpouringEnvOtion } from '../typings/config';
 import { filterObject } from '../utils/utils';
 
 /**
@@ -27,7 +28,7 @@ export async function actionCompileTsFile(
   tsFile: miniPack.ITsFileData[],
   rootPath: string,
   copyPath: string,
-  inpourEnv: miniPack.InpouringEnvOtion,
+  inpourEnv: InpouringEnvOtion,
   esBuildOptions: esbuild.BuildOptions,
 ) {
   console.log('正在编译指定文件');
