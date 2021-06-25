@@ -19,6 +19,9 @@ function minifyWxml({ data, }) {
     return data.replace(/\n|\s{2,}/g, ' ').replace(/\/\/.*|<!--.*-->/g, '')
   }
 
+/**
+ * @type import('./dist/index').miniPackConfigOption
+ */
 module.exports = {
     watchEntry: path.resolve(__dirname, 'test','compileCode'),
     tsConfigPath: path.resolve(__dirname, 'tsconfig.json'),

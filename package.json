@@ -1,8 +1,9 @@
 {
   "name": "weapp-minipack",
-  "version": "0.1.16",
+  "version": "0.1.18",
   "description": "a bundler for wechat miniprogram",
   "main": "./dist/bundle.js",
+  "types": "./dist/index.d.ts",
   "bin": {
     "weapp-minipack": "./dist/bundle_command.js"
   },
@@ -10,7 +11,7 @@
     "test:method": "node ./test/index.js",
     "test:command": "minipack -c ./minipack.config.js",
     "test:compile": "jest",
-    "build": "yarn build:method & yarn build:commander",
+    "build": "yarn build:method & yarn build:commander & shx cp ./src/typings/config.d.ts ./dist/index.d.ts",
     "build:method": "cross-env NODE_ENV=production:method rollup --config ./rollup.config.js & ",
     "build:commander": "cross-env NODE_ENV=production:commander rollup --config ./rollup.config.js"
   },
@@ -44,6 +45,7 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-typescript2": "^0.30.0",
+    "shx": "^0.3.3",
     "ts-node": "^10.0.0",
     "tslib": "^2.0.3",
     "typescript": "^4.1.3"

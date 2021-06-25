@@ -26,6 +26,7 @@ module.exports = {
     commonjs(),
     rollupTypescript({
       tsconfig: path.resolve(__dirname, 'tsconfig.json'),
+      useTsconfigDeclarationDir: true,
     }),
   ]
 }
