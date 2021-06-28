@@ -55,7 +55,9 @@ const TS_REG = /.*\.ts$/;
 function handleAssetsFile(tmpPath, endPath, plugins) {
     let formatData = '';
     for (let x of plugins) {
-        if (x.test.test(tmpPath) && fs.existsSync(tmpPath)) {
+        if (x.test.test(tmpPath) &&
+            fs.existsSync(tmpPath) &&
+            fs.statSync(tmpPath).isFile()) {
             const data = fs.readFileSync(tmpPath, { encoding: 'utf-8' });
             const actionData = {
                 copyDir: endPath,

@@ -1,6 +1,6 @@
 {
   "name": "weapp-minipack",
-  "version": "0.1.18",
+  "version": "0.1.20",
   "description": "a bundler for wechat miniprogram",
   "main": "./dist/bundle.js",
   "types": "./dist/index.d.ts",

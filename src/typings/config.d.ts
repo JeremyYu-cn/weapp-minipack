@@ -1,5 +1,12 @@
 import type esbuild from 'esbuild';
 
+interface IPluginOption {
+    copyDir: string
+    filePath: string
+    data: string
+    dataBuf: Buffer
+}
+
 type PluginFunction = {
     test: RegExp,
     action: (data: IPluginOption) => string
@@ -85,8 +92,6 @@ export interface miniPackConfigOption {
    esBuildOptions?: esbuild.BuildOptions
 }
 
-import { minifierStyle } from './minify/minifyWxss';
-import { minifyerWxml } from './minify/minifyWxml';
 import commander from 'commander';
 export declare class Entry {
     private DEFAULT_MINIPACK_CONFIG_PATH;
@@ -117,6 +122,4 @@ export declare class Entry {
      */
     watchFile(): void;
 }
-export declare const minifyStyle: typeof minifierStyle;
-export declare const minifyWxml: typeof minifyerWxml;
 
